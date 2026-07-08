@@ -1,0 +1,9 @@
+name: vulnerable_app
+description: >-
+  Intentionally vulnerable demo app. Every security_doctor rule fires
+  here — run `security_doctor --path example/vulnerable_app` to see them.
+publish_to: none
+version: 0.1.0
+
+environment:
+  sdk: ^3.5.0

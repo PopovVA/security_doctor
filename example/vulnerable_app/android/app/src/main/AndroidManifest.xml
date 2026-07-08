@@ -1,0 +1,11 @@
+<!-- Intentionally vulnerable demo manifest: SD005, SD006, SD007. -->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="com.example.vulnerable_app">
+    <uses-permission android:name="android.permission.READ_SMS" />
+    <uses-permission android:name="android.permission.CAMERA" />
+    <application
+        android:label="vulnerable_app"
+        android:usesCleartextTraffic="true"
+        android:debuggable="true"
+        android:allowBackup="true" />
+</manifest>

@@ -3,8 +3,7 @@ import 'dart:convert';
 import 'engine.dart';
 import 'rule.dart';
 
-/// Turns an [AuditReport] into one of the output formats. Markdown and
-/// SARIF land in later milestones on the same interface.
+/// Turns an [AuditReport] into one of the output formats.
 abstract class Reporter {
   String format(AuditReport report);
 }
@@ -71,4 +70,130 @@ class JsonReporter implements Reporter {
       'findings': report.findings.map(encodeFinding).toList(),
     });
   }
+}
+
+/// SARIF 2.1.0 output for GitHub Code Scanning and similar tools.
+class SarifReporter implements Reporter {
+  const SarifReporter();
+
+  /// GitHub renders `note`/`warning`/`error`; `security-severity` (a
+  /// CVSS-like 0-10 score) drives its severity buckets.
+  static String _level(Severity severity) => switch (severity) {
+        Severity.low => 'note',
+        Severity.medium => 'warning',
+        Severity.high || Severity.critical => 'error',
+      };
+
+  static String _securitySeverity(Severity severity) => switch (severity) {
+        Severity.low => '3.0',
+        Severity.medium => '5.5',
+        Severity.high => '8.0',
+        Severity.critical => '9.5',
+      };
+
+  @override
+  String format(AuditReport report) {
+    final rules = <String, Rule>{
+      for (final finding in report.findings) finding.rule.id: finding.rule,
+    };
+    final ruleIds = rules.keys.toList()..sort();
+
+    Map<String, Object?> encodeRule(Rule rule) => {
+          'id': rule.id,
+          'name': rule.title,
+          'shortDescription': {'text': rule.title},
+          'fullDescription': {'text': rule.description},
+          'defaultConfiguration': {'level': _level(rule.severity)},
+          'properties': {
+            'tags': [
+              'security',
+              'external/cwe/cwe-${rule.cwe}',
+              rule.masvs,
+            ],
+            'security-severity': _securitySeverity(rule.severity),
+          },
+        };
+
+    Map<String, Object?> encodeResult(Finding finding) => {
+          'ruleId': finding.rule.id,
+          'ruleIndex': ruleIds.indexOf(finding.rule.id),
+          'level': _level(finding.severity),
+          'message': {'text': finding.message},
+          'locations': [
+            {
+              'physicalLocation': {
+                'artifactLocation': {
+                  'uri': finding.path,
+                  'uriBaseId': '%SRCROOT%',
+                },
+                if (finding.line != null)
+                  'region': {
+                    'startLine': finding.line,
+                    if (finding.column != null) 'startColumn': finding.column,
+                  },
+              },
+            },
+          ],
+        };
+
+    return const JsonEncoder.withIndent('  ').convert({
+      '\$schema': 'https://json.schemastore.org/sarif-2.1.0.json',
+      'version': '2.1.0',
+      'runs': [
+        {
+          'tool': {
+            'driver': {
+              'name': 'security_doctor',
+              'informationUri': 'https://github.com/PopovVA/security_doctor',
+              'rules': [for (final id in ruleIds) encodeRule(rules[id]!)],
+            },
+          },
+          'results': report.findings.map(encodeResult).toList(),
+        },
+      ],
+    });
+  }
+}
+
+/// Markdown output for PR comments and job summaries.
+class MarkdownReporter implements Reporter {
+  const MarkdownReporter();
+
+  @override
+  String format(AuditReport report) {
+    final buffer = StringBuffer('# security_doctor report\n\n');
+
+    final files = '${report.scannedFileCount} '
+        'file${report.scannedFileCount == 1 ? '' : 's'} scanned';
+    if (report.findings.isEmpty) {
+      buffer.write('No security findings ($files).\n');
+      return buffer.toString();
+    }
+
+    final total = report.findings.length;
+    buffer
+      ..writeln(
+        '**$total finding${total == 1 ? '' : 's'}**, '
+        '${report.failing.length} at or above `${report.failOn.name}` '
+        '($files).',
+      )
+      ..writeln()
+      ..writeln('| Severity | Rule | Location | Finding | MASVS | CWE |')
+      ..writeln('| --- | --- | --- | --- | --- | --- |');
+    for (final f in report.findings) {
+      final location = f.line == null ? f.path : '${f.path}:${f.line}';
+      buffer.writeln(
+        '| ${f.severity.name} '
+        '| ${f.rule.id} '
+        '| `${_escape(location)}` '
+        '| ${_escape(f.message)} '
+        '| ${f.rule.masvs} '
+        '| CWE-${f.rule.cwe} |',
+      );
+    }
+    return buffer.toString();
+  }
+
+  static String _escape(String cell) =>
+      cell.replaceAll('|', r'\|').replaceAll('\n', ' ');
 }

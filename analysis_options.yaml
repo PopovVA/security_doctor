@@ -2,8 +2,9 @@ include: package:lints/recommended.yaml
 
 analyzer:
   exclude:
-    # Deliberately vulnerable code samples for rule tests.
+    # Deliberately vulnerable code samples for rule tests and the demo.
     - test/fixtures/**
+    - example/vulnerable_app/**
 
 linter:
   rules:

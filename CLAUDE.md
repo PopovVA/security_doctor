@@ -30,9 +30,12 @@ Sibling of pubspec_doctor — conventions are transferred from it 1:1.
   security_audit.yaml config, console/JSON reports (stage 3); rules
   SD001-SD004 on the lazy AST pass, fixtures under test/fixtures/
   excluded from analysis (stage 4); SD005-SD007 on XML-parsed native
-  configs, non-release manifests (src/debug etc.) are skipped (stage 5).
-- Next: stage 6 — SARIF + SD008 + Markdown report; release 0.1.0
-  (stage 7).
+  configs, non-release manifests (src/debug etc.) are skipped (stage 5);
+  SARIF + Markdown reporters, --format flag, SD008, vulnerable demo in
+  example/vulnerable_app (stage 6).
+- Next: stage 7 — release 0.1.0: needs RELEASE_PLEASE_TOKEN secret and
+  the first manual `dart pub publish`, then flip pub.dev to automated
+  publishing.
 - Pending manual steps: RELEASE_PLEASE_TOKEN secret (fine-grained PAT,
   Contents+PR read/write on this repo); first manual `dart pub publish`,
   then enable trusted publishing and disable manual publishing on pub.dev.

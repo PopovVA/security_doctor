@@ -8,8 +8,8 @@ Security audit for Flutter and Dart apps. Every rule maps to an
 already use. Built for CI: exit codes work like a test suite, reports come
 in console, JSON, Markdown and SARIF (GitHub Code Scanning) formats.
 
-> Status: pre-release. The rule engine and the first rules are under
-> active development. The sibling package for dependency auditing is
+> Status: pre-release. All phase-1 rules are implemented; first publish
+> is coming as 0.1.0. The sibling package for dependency auditing is
 > [pubspec_doctor](https://pub.dev/packages/pubspec_doctor).
 
 ## Quick start
@@ -34,7 +34,27 @@ exclude:
 
 Severities are `low`, `medium`, `high`, `critical`; the default
 `fail_on` is `low`. The `--fail-on` CLI flag overrides the config, and
-`--json` switches the report to JSON.
+`--format` picks the report: `console` (default), `json`, `markdown`
+or `sarif`.
+
+### GitHub Code Scanning
+
+```yaml
+- run: security_doctor --format sarif > security.sarif || true
+- uses: github/codeql-action/upload-sarif@v3
+  with:
+    sarif_file: security.sarif
+```
+
+### Demo
+
+An intentionally vulnerable mini app lives in
+[`example/vulnerable_app`](example/vulnerable_app) — every rule fires on
+it:
+
+```sh
+security_doctor --path example/vulnerable_app
+```
 
 ## Rules (phase 1)
 
@@ -47,7 +67,7 @@ Severities are `low`, `medium`, `high`, `critical`; the default
 | SD005 | `usesCleartextTraffic` / `NSAllowsArbitraryLoads` | MASVS-NETWORK-1 | CWE-319 | ✅ |
 | SD006 | `android:debuggable` / `android:allowBackup` | MASVS-RESILIENCE-2 | CWE-489 | ✅ |
 | SD007 | Dangerous Android permissions | MASVS-PLATFORM-1 | CWE-250 | ✅ |
-| SD008 | Sensitive data in `print`/log output | MASVS-STORAGE-2 | CWE-532 | planned |
+| SD008 | Sensitive data in `print`/log output | MASVS-STORAGE-2 | CWE-532 | ✅ |
 
 Optional compliance mapping (PCI DSS, ISO 27001 Annex A) is planned as an
 opt-in report layer on top of the same findings.
