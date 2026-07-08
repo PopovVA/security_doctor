@@ -12,6 +12,7 @@ executables:
   security_doctor:
 
 dependencies:
+  analyzer: ^12.0.0
   args: ^2.7.0
   glob: ^2.1.2
   yaml: ^3.1.2

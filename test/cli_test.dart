@@ -47,6 +47,23 @@ void main() {
     expect(await run(['--path', root.path]), 2);
   });
 
+  test('a project with findings exits 1', () async {
+    File('${root.path}/pubspec.yaml').writeAsStringSync('name: app\n');
+    Directory('${root.path}/lib').createSync();
+    File('${root.path}/lib/main.dart')
+        .writeAsStringSync("const url = 'http://api.example.com';\n");
+    expect(await run(['--path', root.path]), 1);
+  });
+
+  test('findings below --fail-on do not fail the run', () async {
+    File('${root.path}/pubspec.yaml').writeAsStringSync('name: app\n');
+    Directory('${root.path}/lib').createSync();
+    // SD002 is medium severity, below the high threshold.
+    File('${root.path}/lib/main.dart')
+        .writeAsStringSync("const url = 'http://api.example.com';\n");
+    expect(await run(['--path', root.path, '--fail-on', 'high']), 0);
+  });
+
   test('--fail-on overrides the config threshold', () async {
     File('${root.path}/pubspec.yaml').writeAsStringSync('name: app\n');
     File('${root.path}/security_audit.yaml')

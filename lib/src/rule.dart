@@ -1,3 +1,5 @@
+import 'package:analyzer/dart/ast/ast.dart';
+
 import 'scan_file.dart';
 
 /// How serious a finding is.
@@ -60,6 +62,18 @@ abstract class TextRule extends Rule {
   bool appliesTo(ScanFile file);
 
   List<Finding> check(ScanFile file);
+}
+
+/// A rule that inspects the parsed AST of a Dart file.
+///
+/// The engine parses each Dart file once, and only when at least one
+/// [DartRule] is active — text-only runs never pay for the analyzer.
+/// Rules that just need string literals share the literal-collecting
+/// visitor instead of getting a third subtype.
+abstract class DartRule extends Rule {
+  const DartRule();
+
+  List<Finding> check(ScanFile file, CompilationUnit unit);
 }
 
 /// One occurrence of a rule violation.
