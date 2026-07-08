@@ -114,6 +114,39 @@ void main() {
     expect(report.findings, isEmpty);
   });
 
+  test('native config rules see manifests and plists end to end', () {
+    write('android/app/src/main/AndroidManifest.xml', '''
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+  <application android:usesCleartextTraffic="true" android:debuggable="true"/>
+</manifest>
+''');
+    write('android/app/src/debug/AndroidManifest.xml', '''
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+  <application android:usesCleartextTraffic="true"/>
+</manifest>
+''');
+    write('ios/Runner/Info.plist', '''
+<plist version="1.0"><dict>
+  <key>NSAllowsArbitraryLoads</key><true/>
+</dict></plist>
+''');
+
+    final report = SecurityAuditor(
+      rules: [const CleartextConfigRule(), const DebugFlagsRule()],
+    ).audit(root);
+
+    // Release manifest: SD005 + SD006. Plist: SD005. Debug manifest: none.
+    expect(report.findings, hasLength(3));
+    expect(
+      report.findings.map((f) => f.rule.id),
+      containsAll(['SD005', 'SD006']),
+    );
+    expect(
+      report.findings.map((f) => f.path),
+      isNot(contains('android/app/src/debug/AndroidManifest.xml')),
+    );
+  });
+
   test('findings below the threshold are reported but do not fail', () {
     write('lib/a.dart', 'MARKER\n');
 
