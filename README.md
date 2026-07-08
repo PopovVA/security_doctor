@@ -19,6 +19,23 @@ dart pub global activate security_doctor
 security_doctor
 ```
 
+## Configuration
+
+Drop a `security_audit.yaml` next to your `pubspec.yaml` (all keys
+optional):
+
+```yaml
+rules:
+  SD002: false        # disable a rule
+fail_on: high         # exit 1 only for findings at/above this severity
+exclude:
+  - lib/generated/**  # globs, relative to the project root
+```
+
+Severities are `low`, `medium`, `high`, `critical`; the default
+`fail_on` is `low`. The `--fail-on` CLI flag overrides the config, and
+`--json` switches the report to JSON.
+
 ## Planned rules (phase 1)
 
 | Id | Rule | MASVS | CWE |

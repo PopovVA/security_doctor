@@ -2,6 +2,12 @@ import 'dart:io';
 
 import 'package:args/args.dart';
 
+import 'config.dart';
+import 'engine.dart';
+import 'registry.dart';
+import 'reporter.dart';
+import 'rule.dart';
+
 /// Exit codes, matching the pubspec_doctor convention:
 /// 0 — no findings at or above the threshold, 1 — findings found,
 /// 2 — usage or runtime error.
@@ -12,6 +18,12 @@ Future<int> run(List<String> arguments) async {
       abbr: 'p',
       defaultsTo: '.',
       help: 'Path to the project root (where pubspec.yaml lives).',
+    )
+    ..addOption(
+      'fail-on',
+      allowed: Severity.values.map((s) => s.name),
+      help: 'Lowest severity that makes the run exit 1. '
+          'Overrides fail_on from security_audit.yaml.',
     )
     ..addFlag('json', negatable: false, help: 'Output the report as JSON.')
     ..addFlag(
@@ -43,10 +55,25 @@ Future<int> run(List<String> arguments) async {
     return 2;
   }
 
-  // The rule engine lands in the next milestone; the CLI contract
-  // (flags, exit codes) is stable from day one.
-  stdout.writeln('security_doctor: no rules registered yet.');
-  return 0;
+  AuditConfig config;
+  try {
+    config = AuditConfig.load(root);
+  } on FormatException catch (e) {
+    stderr.writeln(e.message);
+    return 2;
+  }
+  final failOn = args.option('fail-on');
+  if (failOn != null) {
+    config = config.copyWith(failOn: Severity.parse(failOn));
+  }
+
+  final report =
+      SecurityAuditor(rules: builtInRules, config: config).audit(root);
+  final reporter = args.flag('json')
+      ? const JsonReporter() as Reporter
+      : const ConsoleReporter();
+  stdout.writeln(reporter.format(report));
+  return report.fails ? 1 : 0;
 }
 
 String _usage(ArgParser parser) =>

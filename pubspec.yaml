@@ -13,6 +13,8 @@ executables:
 
 dependencies:
   args: ^2.7.0
+  glob: ^2.1.2
+  yaml: ^3.1.2
 
 dev_dependencies:
   lints: ^6.1.0

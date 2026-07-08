@@ -3,3 +3,9 @@
 library;
 
 export 'src/cli.dart';
+export 'src/config.dart';
+export 'src/engine.dart';
+export 'src/registry.dart';
+export 'src/reporter.dart';
+export 'src/rule.dart';
+export 'src/scan_file.dart';
