@@ -1,0 +1,19 @@
+name: security_doctor
+description: >-
+  Security audit for Flutter and Dart apps: OWASP MASVS and CWE mapped checks
+  for Dart code, configs and native manifests. Built for CI.
+version: 0.1.0
+repository: https://github.com/PopovVA/security_doctor
+
+environment:
+  sdk: ^3.5.0
+
+executables:
+  security_doctor:
+
+dependencies:
+  args: ^2.7.0
+
+dev_dependencies:
+  lints: ^6.1.0
+  test: ^1.31.0

@@ -1,0 +1,33 @@
+name: Release
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  release-please:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: googleapis/release-please-action@v4
+        id: release
+        with:
+          # RELEASE_PLEASE_TOKEN (fine-grained PAT) lets CI run on the
+          # release PR; GITHUB_TOKEN works but does not trigger workflows.
+          token: ${{ secrets.RELEASE_PLEASE_TOKEN || secrets.GITHUB_TOKEN }}
+          release-type: dart
+      # Keep the moving major tag (v0, v1, ...) on the latest release.
+      - uses: actions/checkout@v5
+        if: ${{ steps.release.outputs.release_created }}
+      - if: ${{ steps.release.outputs.release_created }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          # Tag the release SHA directly: the shallow checkout has no tags,
+          # so vX.Y.Z is not resolvable here.
+          git tag -f "v${{ steps.release.outputs.major }}" "${{ steps.release.outputs.sha }}"
+          git push -f origin "v${{ steps.release.outputs.major }}"
