@@ -15,4 +15,6 @@ export 'src/rules/sd004_weak_crypto.dart';
 export 'src/rules/sd005_cleartext_config.dart';
 export 'src/rules/sd006_debug_flags.dart';
 export 'src/rules/sd007_dangerous_permissions.dart';
+export 'src/rules/sd008_sensitive_logging.dart';
+export 'src/rules/sensitive_words.dart';
 export 'src/scan_file.dart';

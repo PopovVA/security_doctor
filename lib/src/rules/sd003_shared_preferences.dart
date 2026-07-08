@@ -3,6 +3,7 @@ import 'package:analyzer/dart/ast/visitor.dart';
 
 import '../rule.dart';
 import '../scan_file.dart';
+import 'sensitive_words.dart';
 
 /// SD003 — sensitive data written to SharedPreferences.
 ///
@@ -36,40 +37,13 @@ class SharedPreferencesRule extends DartRule {
 
   static const _writeMethods = {'setString', 'setStringList'};
 
-  /// Words that make a preference key sensitive. Matched against whole
-  /// words split from the key (camelCase and snake_case aware), so
-  /// 'authorName' does not match 'auth'.
-  static const _sensitiveWords = {
-    'password',
-    'passwd',
-    'pwd',
-    'secret',
-    'token',
-    'jwt',
-    'credential',
-    'credentials',
-    'apikey',
-    'auth',
-    'session',
-    'pin',
-    'cvv',
-    'ssn',
-  };
-
   @override
   List<Finding> check(ScanFile file, CompilationUnit unit) {
     final visitor = _PrefsWriteVisitor();
     unit.accept(visitor);
     final findings = <Finding>[];
     for (final write in visitor.writes) {
-      final words = splitIdentifierWords(write.key);
-      // 'apiKey' arrives as [api, key]; rejoin neighbours so the pair
-      // can match 'apikey' without 'key' alone being sensitive.
-      final pairs = [
-        for (var i = 0; i + 1 < words.length; i++) words[i] + words[i + 1],
-      ];
-      final sensitive = words.followedBy(pairs).any(_sensitiveWords.contains);
-      if (!sensitive) continue;
+      if (!isSensitiveName(write.key)) continue;
       final position = file.positionOf(write.offset);
       findings.add(
         Finding(
@@ -84,20 +58,6 @@ class SharedPreferencesRule extends DartRule {
     }
     return findings;
   }
-}
-
-/// Splits camelCase, snake_case and kebab-case identifiers into
-/// lowercase words.
-List<String> splitIdentifierWords(String identifier) {
-  final withBreaks = identifier.replaceAllMapped(
-    RegExp('([a-z0-9])([A-Z])'),
-    (m) => '${m[1]} ${m[2]}',
-  );
-  return withBreaks
-      .split(RegExp('[^A-Za-z0-9]+'))
-      .where((w) => w.isNotEmpty)
-      .map((w) => w.toLowerCase())
-      .toList();
 }
 
 class _PrefsWrite {

@@ -62,6 +62,90 @@ void main() {
     });
   });
 
+  group('SarifReporter', () {
+    test('emits valid SARIF 2.1.0 with rules, levels and locations', () {
+      final output =
+          const SarifReporter().format(_report(findings: [_finding()]));
+      final decoded = jsonDecode(output) as Map<String, dynamic>;
+
+      expect(decoded['version'], '2.1.0');
+      final run = (decoded['runs'] as List).single as Map<String, dynamic>;
+      final driver = (run['tool'] as Map<String, dynamic>)['driver']
+          as Map<String, dynamic>;
+      expect(driver['name'], 'security_doctor');
+
+      final sarifRule =
+          (driver['rules'] as List).single as Map<String, dynamic>;
+      expect(sarifRule['id'], 'SD999');
+      final properties = sarifRule['properties'] as Map<String, dynamic>;
+      expect(properties['tags'], contains('external/cwe/cwe-0'));
+      expect(properties['tags'], contains('MASVS-TEST-1'));
+      expect(properties['security-severity'], '8.0');
+
+      final result = (run['results'] as List).single as Map<String, dynamic>;
+      expect(result['ruleId'], 'SD999');
+      expect(result['ruleIndex'], 0);
+      expect(result['level'], 'error');
+      final location = ((result['locations'] as List).single
+          as Map<String, dynamic>)['physicalLocation'] as Map<String, dynamic>;
+      expect(
+        (location['artifactLocation'] as Map<String, dynamic>)['uri'],
+        'lib/a.dart',
+      );
+      expect((location['region'] as Map<String, dynamic>)['startLine'], 3);
+    });
+
+    test('maps severities to SARIF levels', () {
+      String levelFor(Severity severity) {
+        final output = const SarifReporter()
+            .format(_report(findings: [_finding(severity: severity)]));
+        final decoded = jsonDecode(output) as Map<String, dynamic>;
+        final result = (((decoded['runs'] as List).single
+                as Map<String, dynamic>)['results'] as List)
+            .single as Map<String, dynamic>;
+        return result['level'] as String;
+      }
+
+      expect(levelFor(Severity.low), 'note');
+      expect(levelFor(Severity.medium), 'warning');
+      expect(levelFor(Severity.high), 'error');
+      expect(levelFor(Severity.critical), 'error');
+    });
+
+    test('omits the region when a finding has no line', () {
+      final finding = Finding(
+        rule: const MarkerRule(),
+        path: 'pubspec.yaml',
+        message: 'File-level finding.',
+      );
+      final output = const SarifReporter().format(_report(findings: [finding]));
+      expect(output, isNot(contains('startLine')));
+    });
+  });
+
+  group('MarkdownReporter', () {
+    test('reports a clean run', () {
+      final output = const MarkdownReporter().format(_report());
+      expect(output, contains('No security findings (2 files scanned).'));
+    });
+
+    test('renders a findings table with escaped cells', () {
+      final finding = Finding(
+        rule: const MarkerRule(),
+        path: 'lib/a.dart',
+        message: 'contains | a pipe',
+        line: 3,
+      );
+      final output =
+          const MarkdownReporter().format(_report(findings: [finding]));
+      expect(output, contains('| Severity | Rule | Location |'));
+      expect(output, contains('`lib/a.dart:3`'));
+      expect(output, contains(r'contains \| a pipe'));
+      expect(output, contains('MASVS-TEST-1'));
+      expect(output, contains('CWE-0'));
+    });
+  });
+
   group('JsonReporter', () {
     test('emits the documented shape', () {
       final output =

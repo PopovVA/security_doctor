@@ -25,7 +25,18 @@ Future<int> run(List<String> arguments) async {
       help: 'Lowest severity that makes the run exit 1. '
           'Overrides fail_on from security_audit.yaml.',
     )
-    ..addFlag('json', negatable: false, help: 'Output the report as JSON.')
+    ..addOption(
+      'format',
+      abbr: 'f',
+      allowed: ['console', 'json', 'markdown', 'sarif'],
+      defaultsTo: 'console',
+      help: 'Report format. sarif suits GitHub Code Scanning uploads.',
+    )
+    ..addFlag(
+      'json',
+      negatable: false,
+      help: 'Shorthand for --format json.',
+    )
     ..addFlag(
       'help',
       abbr: 'h',
@@ -69,9 +80,13 @@ Future<int> run(List<String> arguments) async {
 
   final report =
       SecurityAuditor(rules: builtInRules, config: config).audit(root);
-  final reporter = args.flag('json')
-      ? const JsonReporter() as Reporter
-      : const ConsoleReporter();
+  final format = args.flag('json') ? 'json' : args.option('format')!;
+  final Reporter reporter = switch (format) {
+    'json' => const JsonReporter(),
+    'markdown' => const MarkdownReporter(),
+    'sarif' => const SarifReporter(),
+    _ => const ConsoleReporter(),
+  };
   stdout.writeln(reporter.format(report));
   return report.fails ? 1 : 0;
 }

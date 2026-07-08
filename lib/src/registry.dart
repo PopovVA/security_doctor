@@ -6,8 +6,9 @@ import 'rules/sd004_weak_crypto.dart';
 import 'rules/sd005_cleartext_config.dart';
 import 'rules/sd006_debug_flags.dart';
 import 'rules/sd007_dangerous_permissions.dart';
+import 'rules/sd008_sensitive_logging.dart';
 
-/// Built-in rules in id order. SD008 lands in the next milestone.
+/// Built-in rules in id order.
 const List<Rule> builtInRules = [
   HardcodedSecretsRule(),
   CleartextHttpRule(),
@@ -16,4 +17,5 @@ const List<Rule> builtInRules = [
   CleartextConfigRule(),
   DebugFlagsRule(),
   DangerousPermissionsRule(),
+  SensitiveLoggingRule(),
 ];

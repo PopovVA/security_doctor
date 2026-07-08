@@ -40,6 +40,14 @@ void main() {
     expect(await run(['--path', root.path, '--json']), 0);
   });
 
+  test('every --format value works and an invalid one exits 2', () async {
+    File('${root.path}/pubspec.yaml').writeAsStringSync('name: app\n');
+    for (final format in ['console', 'json', 'markdown', 'sarif']) {
+      expect(await run(['--path', root.path, '--format', format]), 0);
+    }
+    expect(await run(['--path', root.path, '--format', 'xml']), 2);
+  });
+
   test('a malformed security_audit.yaml exits 2', () async {
     File('${root.path}/pubspec.yaml').writeAsStringSync('name: app\n');
     File('${root.path}/security_audit.yaml')
