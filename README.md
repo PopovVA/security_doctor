@@ -44,9 +44,9 @@ Severities are `low`, `medium`, `high`, `critical`; the default
 | SD002 | Cleartext `http://` URLs in code | MASVS-NETWORK-1 | CWE-319 | ✅ |
 | SD003 | Sensitive data in SharedPreferences | MASVS-STORAGE-1 | CWE-922 | ✅ |
 | SD004 | Weak cryptography (MD5, SHA1, ECB) | MASVS-CRYPTO-1 | CWE-327 | ✅ |
-| SD005 | `usesCleartextTraffic` / `NSAllowsArbitraryLoads` | MASVS-NETWORK-1 | CWE-319 | planned |
-| SD006 | `android:debuggable` / `android:allowBackup` | MASVS-RESILIENCE-2 | CWE-489 | planned |
-| SD007 | Excessive Android/iOS permissions | MASVS-PLATFORM-1 | CWE-250 | planned |
+| SD005 | `usesCleartextTraffic` / `NSAllowsArbitraryLoads` | MASVS-NETWORK-1 | CWE-319 | ✅ |
+| SD006 | `android:debuggable` / `android:allowBackup` | MASVS-RESILIENCE-2 | CWE-489 | ✅ |
+| SD007 | Dangerous Android permissions | MASVS-PLATFORM-1 | CWE-250 | ✅ |
 | SD008 | Sensitive data in `print`/log output | MASVS-STORAGE-2 | CWE-532 | planned |
 
 Optional compliance mapping (PCI DSS, ISO 27001 Annex A) is planned as an

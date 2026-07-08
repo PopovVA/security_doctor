@@ -12,4 +12,7 @@ export 'src/rules/sd001_hardcoded_secrets.dart';
 export 'src/rules/sd002_cleartext_http.dart';
 export 'src/rules/sd003_shared_preferences.dart';
 export 'src/rules/sd004_weak_crypto.dart';
+export 'src/rules/sd005_cleartext_config.dart';
+export 'src/rules/sd006_debug_flags.dart';
+export 'src/rules/sd007_dangerous_permissions.dart';
 export 'src/scan_file.dart';
