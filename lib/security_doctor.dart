@@ -8,4 +8,8 @@ export 'src/engine.dart';
 export 'src/registry.dart';
 export 'src/reporter.dart';
 export 'src/rule.dart';
+export 'src/rules/sd001_hardcoded_secrets.dart';
+export 'src/rules/sd002_cleartext_http.dart';
+export 'src/rules/sd003_shared_preferences.dart';
+export 'src/rules/sd004_weak_crypto.dart';
 export 'src/scan_file.dart';

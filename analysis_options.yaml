@@ -1,5 +1,10 @@
 include: package:lints/recommended.yaml
 
+analyzer:
+  exclude:
+    # Deliberately vulnerable code samples for rule tests.
+    - test/fixtures/**
+
 linter:
   rules:
     - prefer_single_quotes

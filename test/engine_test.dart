@@ -82,6 +82,38 @@ void main() {
     expect(report.scannedFileCount, 0);
   });
 
+  test('dart rules run on parsed units', () {
+    write('lib/api.dart', "const url = 'http://api.example.com';\n");
+
+    final report =
+        SecurityAuditor(rules: [const CleartextHttpRule()]).audit(root);
+
+    expect(report.findings, hasLength(1));
+    expect(report.findings.single.rule.id, 'SD002');
+    expect(report.findings.single.line, 1);
+  });
+
+  test('files that do not parse are skipped for dart rules', () {
+    write('lib/broken.dart', "const url = 'http://api.example.com'\n}{");
+
+    final report =
+        SecurityAuditor(rules: [const CleartextHttpRule()]).audit(root);
+
+    expect(report.findings, isEmpty);
+    expect(report.scannedFileCount, 1);
+  });
+
+  test('disabled dart rules do not fire', () {
+    write('lib/api.dart', "const url = 'http://api.example.com';\n");
+
+    final report = SecurityAuditor(
+      rules: [const CleartextHttpRule()],
+      config: AuditConfig(disabledRules: {'SD002'}),
+    ).audit(root);
+
+    expect(report.findings, isEmpty);
+  });
+
   test('findings below the threshold are reported but do not fail', () {
     write('lib/a.dart', 'MARKER\n');
 

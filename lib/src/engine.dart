@@ -1,5 +1,7 @@
 import 'dart:io';
 
+import 'package:analyzer/dart/analysis/utilities.dart';
+
 import 'config.dart';
 import 'rule.dart';
 import 'scan_file.dart';
@@ -48,10 +50,9 @@ class SecurityAuditor {
   };
 
   AuditReport audit(Directory root) {
-    final active = rules.where((r) => config.ruleEnabled(r.id));
+    final active = rules.where((r) => config.ruleEnabled(r.id)).toList();
     final textRules = active.whereType<TextRule>().toList();
-    // Rules needing the Dart AST get their own subtype; the analyzer pass
-    // is wired up only when such a rule is active, per the invariants.
+    final dartRules = active.whereType<DartRule>().toList();
 
     final findings = <Finding>[];
     var scanned = 0;
@@ -59,6 +60,20 @@ class SecurityAuditor {
       scanned++;
       for (final rule in textRules) {
         if (rule.appliesTo(file)) findings.addAll(rule.check(file));
+      }
+      // The AST pass only runs when a rule actually needs it.
+      if (dartRules.isNotEmpty && file.kind == FileKind.dart) {
+        final result = parseString(
+          content: file.content,
+          path: file.path,
+          throwIfDiagnostics: false,
+        );
+        // A file that does not parse yields unreliable ASTs; stay quiet
+        // rather than risk false positives.
+        if (result.errors.isNotEmpty) continue;
+        for (final rule in dartRules) {
+          findings.addAll(rule.check(file, result.unit));
+        }
       }
     }
 

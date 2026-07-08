@@ -27,10 +27,11 @@ Sibling of pubspec_doctor — conventions are transferred from it 1:1.
 
 ## Status
 - Done: scaffolding, CI/CD, CLI skeleton (stage 2); rule engine core,
-  security_audit.yaml config, console/JSON reports (stage 3).
-- Next: stage 4 — rules SD001-SD004 with fixture tests; native config
-  parsers + SD005-SD007 (stage 5); SARIF + SD008 + Markdown (stage 6);
-  release 0.1.0 (stage 7).
+  security_audit.yaml config, console/JSON reports (stage 3); rules
+  SD001-SD004 on the lazy AST pass, fixtures under test/fixtures/
+  excluded from analysis (stage 4).
+- Next: stage 5 — native config parsers + SD005-SD007; SARIF + SD008 +
+  Markdown (stage 6); release 0.1.0 (stage 7).
 - Pending manual steps: RELEASE_PLEASE_TOKEN secret (fine-grained PAT,
   Contents+PR read/write on this repo); first manual `dart pub publish`,
   then enable trusted publishing and disable manual publishing on pub.dev.
