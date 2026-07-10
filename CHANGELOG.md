@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.5.0](https://github.com/PopovVA/security_doctor/compare/v0.4.0...v0.5.0) (2026-07-10)
+
+
+### Features
+
+* 16 more known credential formats in SD001 ([#25](https://github.com/PopovVA/security_doctor/issues/25)) ([1a8c3c9](https://github.com/PopovVA/security_doctor/commit/1a8c3c9d7a7e75039a5da3c87741bc28bdf2db10))
+* widen the analyzer floor to 8.0.0 ([#27](https://github.com/PopovVA/security_doctor/issues/27)) ([9454a9e](https://github.com/PopovVA/security_doctor/commit/9454a9e97f7588b473ab15596a55e312231526c9))
+
 ## [0.4.0](https://github.com/PopovVA/security_doctor/compare/v0.3.0...v0.4.0) (2026-07-10)
 
 
