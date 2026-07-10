@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.0](https://github.com/PopovVA/security_doctor/compare/v0.2.0...v0.3.0) (2026-07-10)
+
+
+### Features
+
+* PCI DSS and ISO 27001 compliance mapping with --compliance report ([#19](https://github.com/PopovVA/security_doctor/issues/19)) ([fdddf5b](https://github.com/PopovVA/security_doctor/commit/fdddf5b3be9f4622bdcc6bcc271a3c210a075237))
+
 ## [0.2.0](https://github.com/PopovVA/security_doctor/compare/v0.1.0...v0.2.0) (2026-07-10)
 
 
