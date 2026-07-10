@@ -1,7 +1,10 @@
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:analyzer/dart/analysis/utilities.dart';
+import 'package:crypto/crypto.dart';
 
+import 'baseline.dart';
 import 'config.dart';
 import 'rule.dart';
 import 'scan_file.dart';
@@ -12,6 +15,7 @@ class AuditReport {
     required this.findings,
     required this.scannedFileCount,
     required this.failOn,
+    this.baselineSuppressedCount = 0,
   });
 
   /// All findings, sorted by path, then line. Includes findings below the
@@ -22,6 +26,9 @@ class AuditReport {
 
   final Severity failOn;
 
+  /// Findings hidden because they match the committed baseline.
+  final int baselineSuppressedCount;
+
   /// Findings that gate the exit code.
   List<Finding> get failing =>
       findings.where((f) => f.severity.atLeast(failOn)).toList();
@@ -31,11 +38,14 @@ class AuditReport {
 
 /// Runs the enabled rules over a project directory.
 class SecurityAuditor {
-  SecurityAuditor({required this.rules, AuditConfig? config})
+  SecurityAuditor({required this.rules, AuditConfig? config, this.baseline})
       : config = config ?? AuditConfig();
 
   final List<Rule> rules;
   final AuditConfig config;
+
+  /// Known findings to suppress; see [Baseline].
+  final Baseline? baseline;
 
   /// Directories never worth descending into.
   static const _skippedDirs = {
@@ -58,8 +68,9 @@ class SecurityAuditor {
     var scanned = 0;
     for (final file in _discover(root)) {
       scanned++;
+      final fileFindings = <Finding>[];
       for (final rule in textRules) {
-        if (rule.appliesTo(file)) findings.addAll(rule.check(file));
+        if (rule.appliesTo(file)) fileFindings.addAll(rule.check(file));
       }
       // The AST pass only runs when a rule actually needs it.
       if (dartRules.isNotEmpty && file.kind == FileKind.dart) {
@@ -70,11 +81,16 @@ class SecurityAuditor {
         );
         // A file that does not parse yields unreliable ASTs; stay quiet
         // rather than risk false positives.
-        if (result.errors.isNotEmpty) continue;
-        for (final rule in dartRules) {
-          findings.addAll(rule.check(file, result.unit));
+        if (result.errors.isEmpty) {
+          for (final rule in dartRules) {
+            fileFindings.addAll(rule.check(file, result.unit));
+          }
         }
       }
+      for (final finding in fileFindings) {
+        finding.fingerprint = _fingerprint(finding, file);
+      }
+      findings.addAll(fileFindings);
     }
 
     findings.sort((a, b) {
@@ -85,11 +101,27 @@ class SecurityAuditor {
       return a.rule.id.compareTo(b.rule.id);
     });
 
+    var kept = findings;
+    var suppressed = 0;
+    if (baseline != null) {
+      (kept, suppressed) = baseline!.apply(findings);
+    }
+
     return AuditReport(
-      findings: findings,
+      findings: kept,
       scannedFileCount: scanned,
       failOn: config.failOn,
+      baselineSuppressedCount: suppressed,
     );
+  }
+
+  /// Line numbers shift on every edit above a finding, so the baseline
+  /// identity hashes the normalized line content instead.
+  static String _fingerprint(Finding finding, ScanFile file) {
+    final line = finding.line == null ? '' : file.lineText(finding.line!);
+    final normalized = line.trim().replaceAll(RegExp(r'\s+'), ' ');
+    final material = '${finding.rule.id}\n${finding.path}\n$normalized';
+    return sha256.convert(utf8.encode(material)).toString();
   }
 
   Iterable<ScanFile> _discover(Directory root) sync* {

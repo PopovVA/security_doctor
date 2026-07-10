@@ -55,6 +55,20 @@ class ScanFile {
     return (line: low + 1, column: offset - starts[low] + 1);
   }
 
+  /// The text of a 1-based [line], without the trailing newline.
+  String lineText(int line) {
+    final starts = _lineStarts ??= _computeLineStarts();
+    if (line < 1 || line > starts.length) return '';
+    final start = starts[line - 1];
+    var end = line < starts.length ? starts[line] : content.length;
+    while (end > start &&
+        (content.codeUnitAt(end - 1) == 0x0A ||
+            content.codeUnitAt(end - 1) == 0x0D)) {
+      end--;
+    }
+    return content.substring(start, end);
+  }
+
   List<int> _computeLineStarts() {
     final starts = [0];
     for (var i = 0; i < content.length; i++) {

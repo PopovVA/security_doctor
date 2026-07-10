@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:args/args.dart';
 
+import 'baseline.dart';
 import 'config.dart';
 import 'engine.dart';
 import 'registry.dart';
@@ -36,6 +37,12 @@ Future<int> run(List<String> arguments) async {
       'json',
       negatable: false,
       help: 'Shorthand for --format json.',
+    )
+    ..addFlag(
+      'write-baseline',
+      negatable: false,
+      help: 'Snapshot all current findings into the baseline file so '
+          'only new findings fail future runs.',
     )
     ..addFlag(
       'help',
@@ -78,8 +85,43 @@ Future<int> run(List<String> arguments) async {
     config = config.copyWith(failOn: Severity.parse(failOn));
   }
 
-  final report =
-      SecurityAuditor(rules: builtInRules, config: config).audit(root);
+  final baselineFile = File(
+    '${root.path}/${config.baselinePath ?? Baseline.defaultFileName}',
+  );
+
+  if (args.flag('write-baseline')) {
+    final report =
+        SecurityAuditor(rules: builtInRules, config: config).audit(root);
+    baselineFile.writeAsStringSync(
+      '${Baseline.fromFindings(report.findings).toJsonString()}\n',
+    );
+    stdout.writeln(
+      'Baseline written: ${report.findings.length} finding'
+      '${report.findings.length == 1 ? '' : 's'} → ${baselineFile.path}',
+    );
+    return 0;
+  }
+
+  Baseline? baseline;
+  if (baselineFile.existsSync()) {
+    try {
+      baseline = Baseline.load(baselineFile);
+    } on FormatException catch (e) {
+      stderr.writeln('${baselineFile.path}: ${e.message}');
+      return 2;
+    }
+  } else if (config.baselinePath != null) {
+    // An explicitly configured baseline that is missing is an error; a
+    // missing default file just means "no baseline yet".
+    stderr.writeln('Baseline file not found: ${baselineFile.path}');
+    return 2;
+  }
+
+  final report = SecurityAuditor(
+    rules: builtInRules,
+    config: config,
+    baseline: baseline,
+  ).audit(root);
   final format = args.flag('json') ? 'json' : args.option('format')!;
   final Reporter reporter = switch (format) {
     'json' => const JsonReporter(),

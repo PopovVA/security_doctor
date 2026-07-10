@@ -41,6 +41,13 @@ class ConsoleReporter implements Reporter {
         "'${report.failOn.name}' ($files).",
       );
     }
+    final suppressed = report.baselineSuppressedCount;
+    if (suppressed > 0) {
+      buffer.write(
+        ' $suppressed baselined finding${suppressed == 1 ? '' : 's'} '
+        'hidden.',
+      );
+    }
     return buffer.toString();
   }
 }
@@ -61,12 +68,14 @@ class JsonReporter implements Reporter {
           'column': f.column,
           'masvs': f.rule.masvs,
           'cwe': f.rule.cwe,
+          if (f.fingerprint != null) 'fingerprint': f.fingerprint,
         };
 
     return const JsonEncoder.withIndent('  ').convert({
       'version': 1,
       'scannedFiles': report.scannedFileCount,
       'failOn': report.failOn.name,
+      'baselineSuppressed': report.baselineSuppressedCount,
       'findings': report.findings.map(encodeFinding).toList(),
     });
   }
@@ -163,10 +172,15 @@ class MarkdownReporter implements Reporter {
   String format(AuditReport report) {
     final buffer = StringBuffer('# security_doctor report\n\n');
 
+    final suppressed = report.baselineSuppressedCount;
+    final baselineNote = suppressed > 0
+        ? ' $suppressed baselined finding${suppressed == 1 ? '' : 's'} '
+            'hidden.'
+        : '';
     final files = '${report.scannedFileCount} '
         'file${report.scannedFileCount == 1 ? '' : 's'} scanned';
     if (report.findings.isEmpty) {
-      buffer.write('No security findings ($files).\n');
+      buffer.write('No security findings ($files).$baselineNote\n');
       return buffer.toString();
     }
 
@@ -175,7 +189,7 @@ class MarkdownReporter implements Reporter {
       ..writeln(
         '**$total finding${total == 1 ? '' : 's'}**, '
         '${report.failing.length} at or above `${report.failOn.name}` '
-        '($files).',
+        '($files).$baselineNote',
       )
       ..writeln()
       ..writeln('| Severity | Rule | Location | Finding | MASVS | CWE |')
