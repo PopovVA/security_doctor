@@ -39,6 +39,7 @@ const Map<ComplianceStandard, Map<String, String>> requirementTitles = {
     '3.3.1': 'Sensitive authentication data is not retained or logged',
     '3.5.1': 'Stored account data is rendered unreadable',
     '4.2.1': 'Strong cryptography protects data in transit',
+    '6.2.4': 'Software engineering techniques prevent common attacks',
     '6.5.6': 'Test and development features are removed before production',
     '7.2.1': 'Access is granted on need-to-know and least privilege',
     '8.6.2': 'Passwords and passphrases are not hard-coded',
@@ -64,6 +65,8 @@ const Map<ComplianceStandard, Map<String, List<String>>> ruleMappings = {
     'SD006': ['6.5.6'],
     'SD007': ['7.2.1'],
     'SD008': ['3.3.1'],
+    'SD009': ['6.2.4'],
+    'SD010': ['6.5.6'],
   },
   ComplianceStandard.iso27001: {
     'SD001': ['A.5.17', 'A.8.28'],
@@ -74,6 +77,8 @@ const Map<ComplianceStandard, Map<String, List<String>>> ruleMappings = {
     'SD006': ['A.8.9'],
     'SD007': ['A.8.9'],
     'SD008': ['A.8.15'],
+    'SD009': ['A.8.28'],
+    'SD010': ['A.8.9'],
   },
 };
 
