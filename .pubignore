@@ -1,0 +1,18 @@
+# .pubignore replaces .gitignore for the published archive, so repeat
+# the build artifacts first.
+.dart_tool/
+build/
+coverage/
+pubspec.lock
+
+# Test-only content. The fixtures deliberately import packages that are
+# not dependencies (crypto, pointycastle), which fails publish
+# validation — and none of this belongs in the archive anyway.
+test/
+
+# Repo plumbing with no value for package consumers.
+.github/
+.claude/
+CLAUDE.md
+release-please-config.json
+.release-please-manifest.json

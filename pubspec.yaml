@@ -11,6 +11,11 @@ environment:
 executables:
   security_doctor:
 
+# The demo app hardcodes fake credentials on purpose — it exists to
+# demonstrate what this package detects.
+false_secrets:
+  - /example/vulnerable_app/lib/main.dart
+
 dependencies:
   analyzer: ^12.0.0
   args: ^2.7.0
