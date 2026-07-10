@@ -33,9 +33,8 @@ Sibling of pubspec_doctor — conventions are transferred from it 1:1.
   configs, non-release manifests (src/debug etc.) are skipped (stage 5);
   SARIF + Markdown reporters, --format flag, SD008, vulnerable demo in
   example/vulnerable_app (stage 6).
-- Next: stage 7 — release 0.1.0: needs RELEASE_PLEASE_TOKEN secret and
-  the first manual `dart pub publish`, then flip pub.dev to automated
-  publishing.
-- Pending manual steps: RELEASE_PLEASE_TOKEN secret (fine-grained PAT,
-  Contents+PR read/write on this repo); first manual `dart pub publish`,
-  then enable trusted publishing and disable manual publishing on pub.dev.
+- Released: 0.1.0 is live on pub.dev (2026-07-10). RELEASE_PLEASE_TOKEN
+  is set, automated publishing is enabled (tag pattern vX.Y.Z, manual
+  publishing disabled) — releases are fully automated from here.
+- Next: phase 2 backlog — baseline support, PCI DSS / ISO 27001 mapping
+  layer, verified publisher on pub.dev.
