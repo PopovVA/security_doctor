@@ -21,7 +21,7 @@ dependencies:
   args: ^2.7.0
   crypto: ^3.0.6
   glob: ^2.1.2
-  xml: ^6.5.0
+  xml: ">=6.5.0 <8.0.0"
   yaml: ^3.1.2
 
 dev_dependencies:
