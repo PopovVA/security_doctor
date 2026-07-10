@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.4.0](https://github.com/PopovVA/security_doctor/compare/v0.3.0...v0.4.0) (2026-07-10)
+
+
+### Features
+
+* inline suppression comments and smarter string literal analysis ([#24](https://github.com/PopovVA/security_doctor/issues/24)) ([98097c7](https://github.com/PopovVA/security_doctor/commit/98097c70c834f0c607919a8024b42e58262e9e37))
+* rules SD009 (release build shrinking) and SD010 (get-task-allow) ([#23](https://github.com/PopovVA/security_doctor/issues/23)) ([bdf69e9](https://github.com/PopovVA/security_doctor/commit/bdf69e93368d57cc457cf61bee743c092060638b))
+* support analyzer 13 and 14 ([#21](https://github.com/PopovVA/security_doctor/issues/21)) ([0351f41](https://github.com/PopovVA/security_doctor/commit/0351f415709a7a789134e58202413ab6f82f98c1))
+
 ## [0.3.0](https://github.com/PopovVA/security_doctor/compare/v0.2.0...v0.3.0) (2026-07-10)
 
 
