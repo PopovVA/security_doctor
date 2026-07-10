@@ -97,5 +97,10 @@ class Finding {
   final int? line;
   final int? column;
 
+  /// Content-based identity for baseline matching: a hash of rule id,
+  /// path and the normalized source line, so it survives line shifts.
+  /// Set by the engine after the rule produced the finding.
+  String? fingerprint;
+
   Severity get severity => rule.severity;
 }

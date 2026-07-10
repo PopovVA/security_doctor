@@ -11,6 +11,7 @@ import 'rule.dart';
 /// rules:
 ///   SD002: false        # disable a rule
 /// fail_on: high         # exit 1 only for findings at/above this severity
+/// baseline: security_baseline.json  # known findings to suppress
 /// exclude:
 ///   - lib/generated/**  # glob, relative to the project root
 /// ```
@@ -21,6 +22,7 @@ class AuditConfig {
   AuditConfig({
     this.disabledRules = const {},
     this.failOn = Severity.low,
+    this.baselinePath,
     List<String> exclude = const [],
   })  : excludePatterns = List.unmodifiable(exclude),
         _excludeGlobs = exclude.map(Glob.new).toList();
@@ -31,6 +33,10 @@ class AuditConfig {
   /// Findings at or above this severity make the run exit 1. Everything
   /// is still reported; this only gates the exit code.
   final Severity failOn;
+
+  /// Baseline file path relative to the project root. When null, the
+  /// default `security_baseline.json` is used if it exists.
+  final String? baselinePath;
 
   /// The raw `exclude` globs, as written in the config.
   final List<String> excludePatterns;
@@ -46,6 +52,7 @@ class AuditConfig {
   AuditConfig copyWith({Severity? failOn}) => AuditConfig(
         disabledRules: disabledRules,
         failOn: failOn ?? this.failOn,
+        baselinePath: baselinePath,
         exclude: excludePatterns,
       );
 
@@ -66,7 +73,7 @@ class AuditConfig {
       );
     }
 
-    const knownKeys = {'rules', 'fail_on', 'exclude'};
+    const knownKeys = {'rules', 'fail_on', 'exclude', 'baseline'};
     for (final key in doc.keys) {
       if (!knownKeys.contains(key)) {
         throw FormatException(
@@ -120,9 +127,20 @@ class AuditConfig {
       }
     }
 
+    String? baselinePath;
+    final rawBaseline = doc['baseline'];
+    if (rawBaseline != null) {
+      if (rawBaseline is! String) {
+        throw FormatException(
+            "'baseline' must be a string path, got '$rawBaseline'.");
+      }
+      baselinePath = rawBaseline;
+    }
+
     return AuditConfig(
       disabledRules: disabled,
       failOn: failOn,
+      baselinePath: baselinePath,
       exclude: exclude,
     );
   }

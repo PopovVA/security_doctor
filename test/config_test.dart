@@ -71,6 +71,16 @@ exclude:
       );
     });
 
+    test('reads the baseline path', () {
+      final config = AuditConfig.parse('baseline: known_findings.json\n');
+      expect(config.baselinePath, 'known_findings.json');
+      expect(AuditConfig.parse('').baselinePath, isNull);
+    });
+
+    test('rejects a non-string baseline', () {
+      expect(() => AuditConfig.parse('baseline: 3'), throwsFormatException);
+    });
+
     test('rejects non-string exclude entries', () {
       expect(() => AuditConfig.parse('exclude:\n  - 3'), throwsFormatException);
     });

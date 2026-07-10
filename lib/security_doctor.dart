@@ -2,6 +2,7 @@
 /// checks for Dart code, configs and native manifests.
 library;
 
+export 'src/baseline.dart';
 export 'src/cli.dart';
 export 'src/config.dart';
 export 'src/engine.dart';

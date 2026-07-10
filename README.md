@@ -28,6 +28,7 @@ optional):
 rules:
   SD002: false        # disable a rule
 fail_on: high         # exit 1 only for findings at/above this severity
+baseline: security_baseline.json  # optional; this is the default name
 exclude:
   - lib/generated/**  # globs, relative to the project root
 ```
@@ -36,6 +37,20 @@ Severities are `low`, `medium`, `high`, `critical`; the default
 `fail_on` is `low`. The `--fail-on` CLI flag overrides the config, and
 `--format` picks the report: `console` (default), `json`, `markdown`
 or `sarif`.
+
+### Adopting on an existing project
+
+Snapshot the current findings once, commit the file, and only new
+findings will fail CI — historical debt stays visible (a "hidden"
+counter in every report) without blocking:
+
+```sh
+security_doctor --write-baseline   # writes security_baseline.json
+```
+
+Baseline entries match findings by a content hash (rule + file +
+normalized line), so they survive unrelated edits and line shifts.
+Delete the file or re-run `--write-baseline` to reset.
 
 ### GitHub Code Scanning
 
