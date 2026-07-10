@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.0](https://github.com/PopovVA/security_doctor/compare/v0.1.0...v0.2.0) (2026-07-10)
+
+
+### Features
+
+* baseline support for adopting on existing projects ([#12](https://github.com/PopovVA/security_doctor/issues/12)) ([c2c3f53](https://github.com/PopovVA/security_doctor/commit/c2c3f538a84a7fc3b612d583b6706645db3c342e))
+
 ## 0.1.0 (2026-07-10)
 
 
