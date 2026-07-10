@@ -100,7 +100,10 @@ class _WeakCryptoVisitor extends RecursiveAstVisitor<void> {
   final digestUses = <_DigestUse>[];
   final ecbCiphers = <int>[];
 
-  static bool _isWeakDigest(Expression? expression) {
+  /// Accepts [Object] rather than [Expression]: analyzer 13 changed
+  /// `ArgumentList.arguments` to `NodeList<Argument>` (which Expression
+  /// implements), and this keeps one code path compiling on 12 through 14.
+  static bool _isWeakDigest(Object? expression) {
     final name = switch (expression) {
       SimpleIdentifier(:final name) => name,
       PrefixedIdentifier(:final identifier) => identifier.name,
