@@ -52,6 +52,23 @@ Baseline entries match findings by a content hash (rule + file +
 normalized line), so they survive unrelated edits and line shifts.
 Delete the file or re-run `--write-baseline` to reset.
 
+### Suppressing a single finding
+
+For a deliberate exception, add an inline comment on the finding's
+line or the line above (any comment syntax — Dart, Gradle or XML):
+
+```dart
+final devUrl = 'http://intranet.corp/api'; // security_doctor: ignore SD002
+```
+
+```xml
+<!-- security_doctor: ignore SD006 -->
+<application android:allowBackup="true">
+```
+
+Several ids can be comma-separated. Suppressed findings are counted in
+every report, so exceptions stay visible.
+
 ### Compliance mapping (PCI DSS, ISO 27001)
 
 `--compliance` regroups the report by requirements of a standard, in

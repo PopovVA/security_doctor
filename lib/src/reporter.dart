@@ -48,6 +48,12 @@ class ConsoleReporter implements Reporter {
         'hidden.',
       );
     }
+    if (report.ignoredCount > 0) {
+      buffer.write(
+        ' ${report.ignoredCount} ignored by inline comment'
+        '${report.ignoredCount == 1 ? '' : 's'}.',
+      );
+    }
     return buffer.toString();
   }
 }
@@ -76,6 +82,7 @@ class JsonReporter implements Reporter {
       'scannedFiles': report.scannedFileCount,
       'failOn': report.failOn.name,
       'baselineSuppressed': report.baselineSuppressedCount,
+      'ignored': report.ignoredCount,
       'findings': report.findings.map(encodeFinding).toList(),
     });
   }
