@@ -15,14 +15,22 @@ void main() {
 
   test('flags cleartext URLs, including ports and uppercase schemes', () {
     final findings = checkFixture(rule, 'sd002/vulnerable.dart');
-    expect(findings, hasLength(3));
+    // 3 plain literals + adjacent strings + '+' concat + interpolation.
+    expect(findings, hasLength(6));
     expect(
       findings.map((f) => f.message),
       everyElement(contains('https://')),
     );
+    // Partial values are marked as such in the message.
+    expect(
+      findings.map((f) => f.message),
+      contains(contains("'http://api.…'")),
+    );
   });
 
-  test('stays quiet on https, local hosts, namespaces and prose', () {
+  test(
+      'stays quiet on https, local hosts, namespaces, prose and '
+      'runtime-computed hosts', () {
     expect(checkFixture(rule, 'sd002/clean.dart'), isEmpty);
   });
 }

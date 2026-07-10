@@ -7,3 +7,7 @@ const ipv6Loopback = 'http://[::1]:8080/';
 const xmlNamespace = 'http://www.w3.org/2000/svg';
 const androidSchema = 'http://schemas.android.com/apk/res/android';
 const notAUrl = 'http:// is insecure, prefer https://';
+
+// The host is computed at runtime — unknowable, so no finding.
+String dynamicHost(String host) => 'http://' + host;
+String localWithPort(int port) => 'http://localhost:$port/api';

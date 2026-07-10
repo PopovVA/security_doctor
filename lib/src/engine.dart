@@ -16,6 +16,7 @@ class AuditReport {
     required this.scannedFileCount,
     required this.failOn,
     this.baselineSuppressedCount = 0,
+    this.ignoredCount = 0,
   });
 
   /// All findings, sorted by path, then line. Includes findings below the
@@ -28,6 +29,10 @@ class AuditReport {
 
   /// Findings hidden because they match the committed baseline.
   final int baselineSuppressedCount;
+
+  /// Findings silenced by an inline `security_doctor: ignore SD###`
+  /// comment.
+  final int ignoredCount;
 
   /// Findings that gate the exit code.
   List<Finding> get failing =>
@@ -66,6 +71,7 @@ class SecurityAuditor {
 
     final findings = <Finding>[];
     var scanned = 0;
+    var ignored = 0;
     for (final file in _discover(root)) {
       scanned++;
       final fileFindings = <Finding>[];
@@ -87,6 +93,9 @@ class SecurityAuditor {
           }
         }
       }
+      final before = fileFindings.length;
+      fileFindings.removeWhere((f) => _isIgnored(f, file));
+      ignored += before - fileFindings.length;
       for (final finding in fileFindings) {
         finding.fingerprint = _fingerprint(finding, file);
       }
@@ -112,7 +121,41 @@ class SecurityAuditor {
       scannedFileCount: scanned,
       failOn: config.failOn,
       baselineSuppressedCount: suppressed,
+      ignoredCount: ignored,
     );
+  }
+
+  static final _ignorePattern =
+      RegExp(r'security_doctor:\s*ignore\s+(SD\d+(?:\s*,\s*SD\d+)*)');
+
+  /// Whitespace and comment punctuation — all that may precede a
+  /// directive on a standalone comment line.
+  static final _commentPrefix = RegExp(r'^[\s/#<!*-]*$');
+
+  /// An inline `security_doctor: ignore SD###[, SD###]` on the finding's
+  /// line or on a standalone comment line directly above silences it.
+  /// Works in any file type — the marker is matched inside whatever
+  /// comment syntax the file uses. A trailing comment only applies to
+  /// its own line, so it cannot accidentally cover the line below.
+  static bool _isIgnored(Finding finding, ScanFile file) {
+    final line = finding.line;
+    if (line == null) return false;
+    bool matches(String text, {required bool standaloneOnly}) {
+      final match = _ignorePattern.firstMatch(text);
+      if (match == null) return false;
+      if (standaloneOnly &&
+          !_commentPrefix.hasMatch(text.substring(0, match.start))) {
+        return false;
+      }
+      return match
+          .group(1)!
+          .split(',')
+          .map((id) => id.trim())
+          .contains(finding.rule.id);
+    }
+
+    return matches(file.lineText(line), standaloneOnly: false) ||
+        (line > 1 && matches(file.lineText(line - 1), standaloneOnly: true));
   }
 
   /// Line numbers shift on every edit above a finding, so the baseline

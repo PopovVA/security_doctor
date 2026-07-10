@@ -58,17 +58,21 @@ class CleartextHttpRule extends DartRule {
       if (!_httpUrl.hasMatch(value)) continue;
       if (_identifierPrefixes.any(value.toLowerCase().startsWith)) continue;
       final host = _hostOf(value);
-      // Prose that merely starts with 'http://' is not a request.
+      // Prose that merely starts with 'http://' is not a request. For a
+      // partial value (constant prefix of an interpolation or concat)
+      // an invalid/empty host means the host is computed at runtime —
+      // unknowable, so stay quiet.
       if (!_validHost.hasMatch(host)) continue;
       if (_localHosts.contains(host)) continue;
       final position = file.positionOf(literal.offset);
+      final shown = literal.isComplete ? value : '$value…';
       findings.add(
         Finding(
           rule: this,
           path: file.path,
           line: position.line,
           column: position.column,
-          message: "Cleartext URL '$value'. Use https:// instead.",
+          message: "Cleartext URL '$shown'. Use https:// instead.",
         ),
       );
     }
