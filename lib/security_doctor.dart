@@ -4,6 +4,7 @@ library;
 
 export 'src/baseline.dart';
 export 'src/cli.dart';
+export 'src/compliance.dart';
 export 'src/config.dart';
 export 'src/engine.dart';
 export 'src/registry.dart';

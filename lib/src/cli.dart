@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:args/args.dart';
 
 import 'baseline.dart';
+import 'compliance.dart';
 import 'config.dart';
 import 'engine.dart';
 import 'registry.dart';
@@ -37,6 +38,13 @@ Future<int> run(List<String> arguments) async {
       'json',
       negatable: false,
       help: 'Shorthand for --format json.',
+    )
+    ..addOption(
+      'compliance',
+      allowed: ComplianceStandard.values.map((s) => s.cliName),
+      help: 'Group the report by requirements of a compliance standard '
+          '(console or markdown format only). Informative mapping, not '
+          'a compliance verdict.',
     )
     ..addFlag(
       'write-baseline',
@@ -123,12 +131,27 @@ Future<int> run(List<String> arguments) async {
     baseline: baseline,
   ).audit(root);
   final format = args.flag('json') ? 'json' : args.option('format')!;
-  final Reporter reporter = switch (format) {
-    'json' => const JsonReporter(),
-    'markdown' => const MarkdownReporter(),
-    'sarif' => const SarifReporter(),
-    _ => const ConsoleReporter(),
-  };
+  final compliance = args.option('compliance');
+  final Reporter reporter;
+  if (compliance != null) {
+    if (format != 'console' && format != 'markdown') {
+      stderr.writeln(
+        '--compliance supports console and markdown formats only.',
+      );
+      return 2;
+    }
+    reporter = ComplianceReporter(
+      ComplianceStandard.parse(compliance),
+      markdown: format == 'markdown',
+    );
+  } else {
+    reporter = switch (format) {
+      'json' => const JsonReporter(),
+      'markdown' => const MarkdownReporter(),
+      'sarif' => const SarifReporter(),
+      _ => const ConsoleReporter(),
+    };
+  }
   stdout.writeln(reporter.format(report));
   return report.fails ? 1 : 0;
 }

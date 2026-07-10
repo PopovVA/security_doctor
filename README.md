@@ -52,6 +52,30 @@ Baseline entries match findings by a content hash (rule + file +
 normalized line), so they survive unrelated edits and line shifts.
 Delete the file or re-run `--write-baseline` to reset.
 
+### Compliance mapping (PCI DSS, ISO 27001)
+
+`--compliance` regroups the report by requirements of a standard, in
+the language auditors ask in:
+
+```sh
+security_doctor --compliance pci-dss
+security_doctor --compliance iso-27001 --format markdown
+```
+
+Requirements with no findings are listed as clean. The mapping is
+informative evidence for audit preparation — not a compliance verdict.
+
+| Id | PCI DSS v4.0 | ISO 27001:2022 Annex A |
+| --- | --- | --- |
+| SD001 | 8.6.2 | A.5.17, A.8.28 |
+| SD002 | 4.2.1 | A.5.14, A.8.24 |
+| SD003 | 3.5.1 | A.8.24 |
+| SD004 | 3.5.1, 4.2.1 | A.8.24 |
+| SD005 | 4.2.1 | A.5.14, A.8.24 |
+| SD006 | 6.5.6 | A.8.9 |
+| SD007 | 7.2.1 | A.8.9 |
+| SD008 | 3.3.1 | A.8.15 |
+
 ### GitHub Code Scanning
 
 ```yaml
