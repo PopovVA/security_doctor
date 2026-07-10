@@ -1,0 +1,9 @@
+// Intentionally vulnerable demo build script: SD009.
+android {
+    buildTypes {
+        release {
+            minifyEnabled false
+            signingConfig signingConfigs.debug
+        }
+    }
+}

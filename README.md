@@ -75,6 +75,8 @@ informative evidence for audit preparation — not a compliance verdict.
 | SD006 | 6.5.6 | A.8.9 |
 | SD007 | 7.2.1 | A.8.9 |
 | SD008 | 3.3.1 | A.8.15 |
+| SD009 | 6.2.4 | A.8.28 |
+| SD010 | 6.5.6 | A.8.9 |
 
 ### GitHub Code Scanning
 
@@ -107,9 +109,8 @@ security_doctor --path example/vulnerable_app
 | SD006 | `android:debuggable` / `android:allowBackup` | MASVS-RESILIENCE-2 | CWE-489 | ✅ |
 | SD007 | Dangerous Android permissions | MASVS-PLATFORM-1 | CWE-250 | ✅ |
 | SD008 | Sensitive data in `print`/log output | MASVS-STORAGE-2 | CWE-532 | ✅ |
-
-Optional compliance mapping (PCI DSS, ISO 27001 Annex A) is planned as an
-opt-in report layer on top of the same findings.
+| SD009 | Release build without code shrinking (R8/ProGuard) | MASVS-RESILIENCE-3 | CWE-1269 | ✅ |
+| SD010 | `get-task-allow` in iOS/macOS entitlements | MASVS-RESILIENCE-2 | CWE-489 | ✅ |
 
 ## Exit codes
 
