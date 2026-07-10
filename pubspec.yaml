@@ -17,7 +17,9 @@ false_secrets:
   - /example/vulnerable_app/lib/main.dart
 
 dependencies:
-  analyzer: ^12.0.0
+  # 13.0.0 changed ArgumentList.arguments to NodeList<Argument>; the code
+  # is written against the common surface so the whole range works.
+  analyzer: ">=12.0.0 <15.0.0"
   args: ^2.7.0
   crypto: ^3.0.6
   glob: ^2.1.2
