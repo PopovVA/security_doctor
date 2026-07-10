@@ -30,20 +30,86 @@ void main() {
   // These token shapes cannot live in a committed fixture — GitHub push
   // protection rejects them as real secrets — so the sources are
   // assembled at runtime instead.
-  test('flags Stripe, Slack and GitHub token formats', () {
-    const cases = {
+  test('flags every known credential format', () {
+    final hex32 = 'a1b2c3d4' * 4;
+    final hex64 = hex32 + hex32;
+    final cases = {
       'Stripe live key': ['sk', '_live_', '4eC39HqLyjWDarjtT1zdp7dc'],
       'Slack token': ['xoxb', '-3336494366', '76-799261852869-clFJVVIao'],
       'GitHub token': ['ghp', '_wWPw5k4aXcaT4fNP0UcnZwJUVFk6LO0pINUx'],
+      'Google OAuth client secret': [
+        'GOCSPX',
+        '-Ab1Cd2Ef3Gh4Ij5Kl6Mn7Op8Qr9s',
+      ],
+      'Firebase Cloud Messaging server key': [
+        'AAAA',
+        'a1B2c3D:APA91b',
+        'F' * 64,
+      ],
+      'Square token': ['sq0atp', '-Ab1Cd2Ef3Gh4Ij5Kl6Mn7X'],
+      'Braintree access token': [
+        r'access_token$production$',
+        'a1b2c3d4e5f6a7b8',
+        r'$',
+        hex32,
+      ],
+      'Slack webhook URL': [
+        'https://hooks.slack.com/services/',
+        'T0001/B0001/XXXXXXXXXXXXXXXXXXXXXXXX',
+      ],
+      'Telegram bot token': ['123456789', ':AA', 'F' * 33],
+      'GitLab personal access token': ['glpat', '-Ab1Cd2Ef3Gh4Ij5Kl6Mn'],
+      'npm access token': ['npm', '_', 'a1B2c3D4' * 4, 'e5F6'],
+      'OpenAI API key': ['sk-', 'proj-', 'Ab1Cd2Ef3Gh4Ij5Kl6Mn7Op8' * 2],
+      'Anthropic API key': ['sk-', 'ant-', 'Ab1Cd2Ef3Gh4Ij5Kl6Mn7Op8' * 2],
+      'Twilio API key': ['SK', hex32],
+      'SendGrid API key': [
+        'SG',
+        '.Ab1Cd2Ef3Gh4Ij5Kl6Mn7X',
+        '.Ab1Cd2Ef3Gh4Ij5Kl6Mn7Op8Qr9St0Uv1Wx2Yz3Ab4X',
+      ],
+      'Mailgun API key': ['key', '-', hex32],
+      'DigitalOcean token': ['dop', '_v1_', hex64],
+      'Shopify token': ['shpat', '_', hex32],
+      'signed JWT': [
+        'eyJhbGciOiJIUzI1NiJ9',
+        '.eyJzdWIiOiIxMjM0NTY3ODkwIn0',
+        '.dozjgNryP4J3jVmNHl0w5N_XgL0n3I9PlFUP0THsR8U',
+      ],
+      'AWS access key id': ['AKIA', 'IOSFODNN7RE4LKEY'],
+      'Google API key': ['AIza', 'SyD-9tSrke72PouQMnMX-a7eZSW0jkFMBWY'],
+      'private key material': ['-----BEGIN RSA ', 'PRIVATE KEY-----'],
     };
     cases.forEach((expected, parts) {
+      // A raw string: several formats contain '$', which plain Dart
+      // literals would treat as interpolation.
       final findings = checkSource(
         rule,
-        "const value = '${parts.join()}';\n",
+        "const value = r'${parts.join()}';\n",
       );
       expect(findings, hasLength(1), reason: expected);
-      expect(findings.single.message, contains(expected));
+      expect(findings.single.message, contains(expected), reason: expected);
     });
+  });
+
+  test('stays quiet on identifier-only and publishable look-alikes', () {
+    // Assembled at runtime like the positive cases: GitHub push
+    // protection flags even the look-alikes we deliberately ignore.
+    final cases = [
+      ['pk', '_live_', '4eC39HqLyjWDarjtT1zdp7dc'], // Stripe publishable.
+      ['AC', 'a1b2c3d4' * 4], // Twilio Account SID.
+      ['sk-', 'short'], // Not an OpenAI key.
+      ['eyJhbGciOiJIUzI1NiJ9', '.eyJzdWIiOiIxIn0'], // Unsigned JWT.
+      ['key-', 'tooshort'],
+    ];
+    for (final parts in cases) {
+      final value = parts.join();
+      expect(
+        checkSource(rule, "const value = r'$value';\n"),
+        isEmpty,
+        reason: value,
+      );
+    }
   });
 
   test('never echoes a full secret in the message', () {
