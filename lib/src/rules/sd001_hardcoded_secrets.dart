@@ -38,13 +38,36 @@ class HardcodedSecretsRule extends DartRule {
   int get cwe => 798;
 
   /// Known credential shapes. Kept specific on purpose: a narrow pattern
-  /// that always means "credential" beats a broad one that sometimes does.
+  /// that always means "credential" beats a broad one that sometimes
+  /// does. Publishable/identifier-only values (Stripe pk_live, Twilio
+  /// Account SIDs) are deliberately absent.
   static final _knownFormats = <String, RegExp>{
     'AWS access key id': RegExp('AKIA[0-9A-Z]{16}'),
     'Google API key': RegExp('AIza[0-9A-Za-z_-]{35}'),
+    'Google OAuth client secret': RegExp('GOCSPX-[A-Za-z0-9_-]{28}'),
+    'Firebase Cloud Messaging server key':
+        RegExp('AAAA[A-Za-z0-9_-]{7}:APA91b[A-Za-z0-9_-]{60,}'),
     'Stripe live key': RegExp('[sr]k_live_[0-9a-zA-Z]{20,}'),
+    'Square token': RegExp('sq0(?:atp|csp)-[A-Za-z0-9_-]{22,43}'),
+    'Braintree access token':
+        RegExp(r'access_token\$production\$[0-9a-z]{16}\$[0-9a-f]{32}'),
     'Slack token': RegExp('xox[baprs]-[0-9A-Za-z-]{10,}'),
+    'Slack webhook URL': RegExp(
+        r'hooks\.slack\.com/services/T[A-Za-z0-9]+/B[A-Za-z0-9]+/[A-Za-z0-9]+'),
+    'Telegram bot token': RegExp('[0-9]{8,10}:AA[A-Za-z0-9_-]{33}'),
     'GitHub token': RegExp('gh[pousr]_[A-Za-z0-9]{36,}'),
+    'GitLab personal access token': RegExp('glpat-[A-Za-z0-9_-]{20}'),
+    'npm access token': RegExp('npm_[A-Za-z0-9]{36}'),
+    'OpenAI API key': RegExp(
+        'sk-proj-[A-Za-z0-9_-]{40,}|sk-[A-Za-z0-9]{20}T3BlbkFJ[A-Za-z0-9]{20}'),
+    'Anthropic API key': RegExp('sk-ant-[A-Za-z0-9-]{40,}'),
+    'Twilio API key': RegExp('SK[0-9a-fA-F]{32}'),
+    'SendGrid API key': RegExp(r'SG\.[A-Za-z0-9_-]{22}\.[A-Za-z0-9_-]{43}'),
+    'Mailgun API key': RegExp('key-[0-9a-z]{32}'),
+    'DigitalOcean token': RegExp('do[pos]_v1_[0-9a-f]{64}'),
+    'Shopify token': RegExp('shp(?:at|ca|pa|ss)_[0-9a-fA-F]{32}'),
+    'signed JWT': RegExp(
+        r'eyJ[A-Za-z0-9_-]{10,}\.eyJ[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}'),
     'private key material': RegExp('-----BEGIN [A-Z ]*PRIVATE KEY-----'),
   };
 
