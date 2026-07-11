@@ -1,5 +1,6 @@
 # security_doctor
 
+[![pub package](https://img.shields.io/pub/v/security_doctor.svg)](https://pub.dev/packages/security_doctor)
 [![CI](https://github.com/PopovVA/security_doctor/actions/workflows/ci.yml/badge.svg)](https://github.com/PopovVA/security_doctor/actions/workflows/ci.yml)
 
 Security audit for Flutter and Dart apps. Every rule maps to an
@@ -8,8 +9,10 @@ Security audit for Flutter and Dart apps. Every rule maps to an
 already use. Built for CI: exit codes work like a test suite, reports come
 in console, JSON, Markdown and SARIF (GitHub Code Scanning) formats.
 
-> Status: pre-release. All phase-1 rules are implemented; first publish
-> is coming as 0.1.0. The sibling package for dependency auditing is
+> Want the same findings while you type? Add
+> [security_doctor_lints](https://pub.dev/packages/security_doctor_lints)
+> and the Dart rules show up right in your IDE, with quick fixes. The
+> sibling package for dependency auditing is
 > [pubspec_doctor](https://pub.dev/packages/pubspec_doctor).
 
 ## Quick start
@@ -114,20 +117,20 @@ it:
 security_doctor --path example/vulnerable_app
 ```
 
-## Rules (phase 1)
+## Rules
 
-| Id | Rule | MASVS | CWE | Status |
-| --- | --- | --- | --- | --- |
-| SD001 | Hardcoded secrets and API keys in Dart code | MASVS-STORAGE-1 | CWE-798 | ✅ |
-| SD002 | Cleartext `http://` URLs in code | MASVS-NETWORK-1 | CWE-319 | ✅ |
-| SD003 | Sensitive data in SharedPreferences | MASVS-STORAGE-1 | CWE-922 | ✅ |
-| SD004 | Weak cryptography (MD5, SHA1, ECB) | MASVS-CRYPTO-1 | CWE-327 | ✅ |
-| SD005 | `usesCleartextTraffic` / `NSAllowsArbitraryLoads` | MASVS-NETWORK-1 | CWE-319 | ✅ |
-| SD006 | `android:debuggable` / `android:allowBackup` | MASVS-RESILIENCE-2 | CWE-489 | ✅ |
-| SD007 | Dangerous Android permissions | MASVS-PLATFORM-1 | CWE-250 | ✅ |
-| SD008 | Sensitive data in `print`/log output | MASVS-STORAGE-2 | CWE-532 | ✅ |
-| SD009 | Release build without code shrinking (R8/ProGuard) | MASVS-RESILIENCE-3 | CWE-1269 | ✅ |
-| SD010 | `get-task-allow` in iOS/macOS entitlements | MASVS-RESILIENCE-2 | CWE-489 | ✅ |
+| Id | Rule | MASVS | CWE |
+| --- | --- | --- | --- |
+| SD001 | Hardcoded secrets and API keys in Dart code | MASVS-STORAGE-1 | CWE-798 |
+| SD002 | Cleartext `http://` URLs in code | MASVS-NETWORK-1 | CWE-319 |
+| SD003 | Sensitive data in SharedPreferences | MASVS-STORAGE-1 | CWE-922 |
+| SD004 | Weak cryptography (MD5, SHA1, ECB) | MASVS-CRYPTO-1 | CWE-327 |
+| SD005 | `usesCleartextTraffic` / `NSAllowsArbitraryLoads` | MASVS-NETWORK-1 | CWE-319 |
+| SD006 | `android:debuggable` / `android:allowBackup` | MASVS-RESILIENCE-2 | CWE-489 |
+| SD007 | Dangerous Android permissions | MASVS-PLATFORM-1 | CWE-250 |
+| SD008 | Sensitive data in `print`/log output | MASVS-STORAGE-2 | CWE-532 |
+| SD009 | Release build without code shrinking (R8/ProGuard) | MASVS-RESILIENCE-3 | CWE-1269 |
+| SD010 | `get-task-allow` in iOS/macOS entitlements | MASVS-RESILIENCE-2 | CWE-489 |
 
 ## Exit codes
 
