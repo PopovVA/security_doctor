@@ -68,7 +68,7 @@ class HardcodedSecretsRule extends DartRule {
     'Shopify token': RegExp('shp(?:at|ca|pa|ss)_[0-9a-fA-F]{32}'),
     'signed JWT': RegExp(
         r'eyJ[A-Za-z0-9_-]{10,}\.eyJ[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}'),
-    'private key material': RegExp('-----BEGIN [A-Z ]*PRIVATE KEY-----'),
+    'private key': RegExp('-----BEGIN [A-Z ]*PRIVATE KEY-----'),
   };
 
   static final _secretName = RegExp(
@@ -107,7 +107,10 @@ class HardcodedSecretsRule extends DartRule {
             path: file.path,
             line: position.line,
             column: position.column,
-            message: 'String literal contains what looks like a '
+            // "a hardcoded" keeps the article on a consonant word, so
+            // every key name reads correctly (a Slack token, an AWS
+            // access key id) without per-name a/an handling.
+            message: 'String literal contains a hardcoded '
                 '${entry.key} (${_mask(match.group(0)!)}).',
           ),
         );

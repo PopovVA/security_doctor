@@ -21,10 +21,19 @@ void main() {
     final messages = findings.map((f) => f.message).join('\n');
     expect(messages, contains('AWS access key id'));
     expect(messages, contains('Google API key'));
-    expect(messages, contains('private key material'));
+    expect(messages, contains('private key'));
     expect(messages, contains("'dbPassword'"));
     expect(messages, contains("'apiKey'"));
     expect(findings.every((f) => f.line != null), isTrue);
+  });
+
+  test('phrases the message so the article is always grammatical', () {
+    // 'a hardcoded ...' keeps the article on a consonant word, so
+    // vowel-sound format names (AWS, OpenAI) do not read as "a AWS".
+    final findings =
+        checkSource(rule, "const value = 'AKIAIOSFODNN7RE4LKEY';\n");
+    expect(findings.single.message, contains('a hardcoded AWS access key'));
+    expect(findings.single.message, isNot(contains('a AWS')));
   });
 
   // These token shapes cannot live in a committed fixture — GitHub push
@@ -78,7 +87,7 @@ void main() {
       ],
       'AWS access key id': ['AKIA', 'IOSFODNN7RE4LKEY'],
       'Google API key': ['AIza', 'SyD-9tSrke72PouQMnMX-a7eZSW0jkFMBWY'],
-      'private key material': ['-----BEGIN RSA ', 'PRIVATE KEY-----'],
+      'private key': ['-----BEGIN RSA ', 'PRIVATE KEY-----'],
     };
     cases.forEach((expected, parts) {
       // A raw string: several formats contain '$', which plain Dart
