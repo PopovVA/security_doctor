@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.5.1](https://github.com/PopovVA/security_doctor/compare/v0.5.0...v0.5.1) (2026-07-11)
+
+
+### Bug Fixes
+
+* correct article in SD001 findings for vowel-sound key names ([#29](https://github.com/PopovVA/security_doctor/issues/29)) ([da14753](https://github.com/PopovVA/security_doctor/commit/da1475378fd54eb3c74ab8ae73badd61e0ba53d3))
+
 ## [0.5.0](https://github.com/PopovVA/security_doctor/compare/v0.4.0...v0.5.0) (2026-07-10)
 
 
