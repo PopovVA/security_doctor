@@ -12,8 +12,9 @@ import 'literals.dart';
 /// Two detectors, both tuned to stay quiet when unsure:
 /// - well-known credential formats (AWS, Google, Stripe, Slack, GitHub,
 ///   PEM private keys) anywhere in a string literal;
-/// - a variable whose name says "secret" initialized with a long,
-///   high-entropy literal that does not look like a placeholder.
+/// - a secret-named binding — variable, map entry, parameter default or
+///   named argument — whose value is a long, high-entropy literal that
+///   does not look like a placeholder.
 class HardcodedSecretsRule extends DartRule {
   const HardcodedSecretsRule();
 
@@ -133,7 +134,7 @@ class HardcodedSecretsRule extends DartRule {
           path: file.path,
           line: position.line,
           column: position.column,
-          message: "Variable '${declaration.name}' is initialized with a "
+          message: "${declaration.kind} '${declaration.name}' is set to a "
               'high-entropy literal (${_mask(value)}) — this looks like '
               'a hardcoded credential.',
         ),
@@ -170,32 +171,70 @@ class HardcodedSecretsRule extends DartRule {
 
 class _SecretDeclaration {
   _SecretDeclaration({
+    required this.kind,
     required this.name,
     required this.value,
     required this.offset,
   });
 
+  /// What the binding is — 'Variable', 'Map entry', 'Parameter',
+  /// 'Argument' — so the message names the actual context.
+  final String kind;
   final String name;
   final String value;
   final int offset;
 }
 
+/// Collects every place a secret-sounding name is bound to a string
+/// literal: variable initializers, map entries, parameter defaults and
+/// named arguments. Entropy and placeholder filtering happen later in
+/// [HardcodedSecretsRule.check]; this only gathers candidates.
 class _SecretDeclarationVisitor extends RecursiveAstVisitor<void> {
   final suspects = <_SecretDeclaration>[];
 
+  void _suspect(String kind, String name, Expression? value) {
+    if (value is! SimpleStringLiteral) return;
+    if (!HardcodedSecretsRule._secretName.hasMatch(name)) return;
+    suspects.add(
+      _SecretDeclaration(
+        kind: kind,
+        name: name,
+        value: value.value,
+        offset: value.offset,
+      ),
+    );
+  }
+
   @override
   void visitVariableDeclaration(VariableDeclaration node) {
-    final initializer = node.initializer;
-    if (initializer is SimpleStringLiteral &&
-        HardcodedSecretsRule._secretName.hasMatch(node.name.lexeme)) {
-      suspects.add(
-        _SecretDeclaration(
-          name: node.name.lexeme,
-          value: initializer.value,
-          offset: initializer.offset,
-        ),
-      );
-    }
+    _suspect('Variable', node.name.lexeme, node.initializer);
     super.visitVariableDeclaration(node);
+  }
+
+  @override
+  void visitMapLiteralEntry(MapLiteralEntry node) {
+    // A string key names the entry outright; an identifier key (a
+    // constant reference) names it just as clearly.
+    final key = node.key;
+    final name = key is SimpleStringLiteral
+        ? key.value
+        : key is SimpleIdentifier
+            ? key.name
+            : null;
+    if (name != null) _suspect('Map entry', name, node.value);
+    super.visitMapLiteralEntry(node);
+  }
+
+  @override
+  void visitDefaultFormalParameter(DefaultFormalParameter node) {
+    final name = node.parameter.name;
+    if (name != null) _suspect('Parameter', name.lexeme, node.defaultValue);
+    super.visitDefaultFormalParameter(node);
+  }
+
+  @override
+  void visitNamedExpression(NamedExpression node) {
+    _suspect('Argument', node.name.label.name, node.expression);
+    super.visitNamedExpression(node);
   }
 }

@@ -16,14 +16,20 @@ void main() {
   test('flags known credential formats and high-entropy secrets', () {
     final findings = checkFixture(rule, 'sd001/vulnerable.dart');
 
-    // 3 known-format literals + 2 secret-named high-entropy variables.
-    expect(findings, hasLength(5));
+    // 3 known-format literals + 6 secret-named high-entropy bindings:
+    // two variables, two map entries, a parameter default and a named
+    // argument.
+    expect(findings, hasLength(9));
     final messages = findings.map((f) => f.message).join('\n');
     expect(messages, contains('AWS access key id'));
     expect(messages, contains('Google API key'));
     expect(messages, contains('private key'));
-    expect(messages, contains("'dbPassword'"));
-    expect(messages, contains("'apiKey'"));
+    expect(messages, contains("Variable 'dbPassword'"));
+    expect(messages, contains("Variable 'apiKey'"));
+    expect(messages, contains("Map entry 'dbPassword'"));
+    expect(messages, contains("Map entry 'authToken'"));
+    expect(messages, contains("Parameter 'apiKey'"));
+    expect(messages, contains("Argument 'apiKey'"));
     expect(findings.every((f) => f.line != null), isTrue);
   });
 
