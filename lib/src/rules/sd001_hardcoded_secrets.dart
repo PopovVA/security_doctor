@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 
 import 'package:analyzer/dart/ast/ast.dart';
+import 'package:analyzer/dart/ast/token.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
 
 import '../rule.dart';
@@ -12,8 +13,9 @@ import 'literals.dart';
 /// Two detectors, both tuned to stay quiet when unsure:
 /// - well-known credential formats (AWS, Google, Stripe, Slack, GitHub,
 ///   PEM private keys) anywhere in a string literal;
-/// - a variable whose name says "secret" initialized with a long,
-///   high-entropy literal that does not look like a placeholder.
+/// - a secret-named binding — variable, map entry, parameter default or
+///   named argument — whose value is a long, high-entropy literal that
+///   does not look like a placeholder.
 class HardcodedSecretsRule extends DartRule {
   const HardcodedSecretsRule();
 
@@ -133,7 +135,7 @@ class HardcodedSecretsRule extends DartRule {
           path: file.path,
           line: position.line,
           column: position.column,
-          message: "Variable '${declaration.name}' is initialized with a "
+          message: "${declaration.kind} '${declaration.name}' is set to a "
               'high-entropy literal (${_mask(value)}) — this looks like '
               'a hardcoded credential.',
         ),
@@ -170,32 +172,124 @@ class HardcodedSecretsRule extends DartRule {
 
 class _SecretDeclaration {
   _SecretDeclaration({
+    required this.kind,
     required this.name,
     required this.value,
     required this.offset,
   });
 
+  /// What the binding is — 'Variable', 'Map entry', 'Parameter',
+  /// 'Argument' — so the message names the actual context.
+  final String kind;
   final String name;
   final String value;
   final int offset;
 }
 
+/// Collects every place a secret-sounding name is bound to a string
+/// literal: variable initializers, map entries, parameter defaults and
+/// named arguments. Entropy and placeholder filtering happen later in
+/// [HardcodedSecretsRule.check]; this only gathers candidates.
+///
+/// Parameter defaults and named arguments are recognized by the shape
+/// of the literal's parent node, not by AST class: analyzer 14 renamed
+/// both nodes (`NamedExpression` → `NamedArgument`,
+/// `DefaultFormalParameter` → a default clause nested in the
+/// parameter), and shape matching keeps a single code path compiling
+/// across analyzer 8 through 14 — the same approach as SD004's
+/// `Object?` signature.
 class _SecretDeclarationVisitor extends RecursiveAstVisitor<void> {
   final suspects = <_SecretDeclaration>[];
 
+  void _suspect(String kind, String? name, Expression? value) {
+    if (name == null) return;
+    if (value is! SimpleStringLiteral) return;
+    if (!HardcodedSecretsRule._secretName.hasMatch(name)) return;
+    suspects.add(
+      _SecretDeclaration(
+        kind: kind,
+        name: name,
+        value: value.value,
+        offset: value.offset,
+      ),
+    );
+  }
+
   @override
   void visitVariableDeclaration(VariableDeclaration node) {
-    final initializer = node.initializer;
-    if (initializer is SimpleStringLiteral &&
-        HardcodedSecretsRule._secretName.hasMatch(node.name.lexeme)) {
-      suspects.add(
-        _SecretDeclaration(
-          name: node.name.lexeme,
-          value: initializer.value,
-          offset: initializer.offset,
-        ),
-      );
-    }
+    _suspect('Variable', node.name.lexeme, node.initializer);
     super.visitVariableDeclaration(node);
+  }
+
+  @override
+  void visitMapLiteralEntry(MapLiteralEntry node) {
+    // A string key names the entry outright; an identifier key (a
+    // constant reference) names it just as clearly.
+    final key = node.key;
+    final name = key is SimpleStringLiteral
+        ? key.value
+        : key is SimpleIdentifier
+            ? key.name
+            : null;
+    _suspect('Map entry', name, node.value);
+    super.visitMapLiteralEntry(node);
+  }
+
+  @override
+  void visitSimpleStringLiteral(SimpleStringLiteral node) {
+    final parent = node.parent;
+    if (parent != null) {
+      final shape = parent.childEntities.toList();
+      _suspect('Argument', _argumentName(shape, node), node);
+      _suspect('Parameter', _parameterName(parent, shape, node), node);
+    }
+    super.visitSimpleStringLiteral(node);
+  }
+
+  /// The name binding [node] as a named argument, or null.
+  ///
+  /// analyzer ≤13 parses `f(key: 'v')` as `NamedExpression(Label('key:')
+  /// value)` where the label wraps an identifier; analyzer 14 parses it
+  /// as `NamedArgument('key' ':' value)` with plain tokens.
+  static String? _argumentName(List<Object?> shape, SimpleStringLiteral node) {
+    if (shape case [Label label, SimpleStringLiteral value]
+        when identical(value, node)) {
+      final name = label.childEntities.first;
+      if (name is SimpleIdentifier) return name.name;
+    }
+    if (shape case [Token name, Token colon, SimpleStringLiteral value]
+        when colon.lexeme == ':' && identical(value, node)) {
+      return name.lexeme;
+    }
+    return null;
+  }
+
+  /// The name of the parameter that [node] is the default value of, or
+  /// null.
+  ///
+  /// analyzer ≤13 wraps the parameter: `DefaultFormalParameter(parameter
+  /// '=' value)`; analyzer 14 nests the clause inside the parameter
+  /// instead: `FormalParameter(... DefaultClause('=' value))`.
+  static String? _parameterName(
+    AstNode parent,
+    List<Object?> shape,
+    SimpleStringLiteral node,
+  ) {
+    bool isSeparator(Token token) => token.lexeme == '=' || token.lexeme == ':';
+
+    if (shape
+        case [
+          FormalParameter parameter,
+          Token separator,
+          SimpleStringLiteral value,
+        ] when isSeparator(separator) && identical(value, node)) {
+      return parameter.name?.lexeme;
+    }
+    if (shape case [Token separator, SimpleStringLiteral value]
+        when isSeparator(separator) && identical(value, node)) {
+      final grandparent = parent.parent;
+      if (grandparent is FormalParameter) return grandparent.name?.lexeme;
+    }
+    return null;
   }
 }

@@ -12,3 +12,16 @@ const requestId = 'q7RkX2mV9tLpZ4wY8bNcE3hJ';
 
 // Secret name, but the value comes from elsewhere at runtime.
 final authToken = String.fromEnvironment('AUTH_TOKEN');
+
+// The same binding contexts with placeholder, low-entropy or
+// unrelated-name values stay quiet too.
+final settings = {
+  'apiKey': 'YOUR_API_KEY_GOES_HERE',
+  'timeout': 'q7RkX2mV9tLpZ4wY8bNcE3hJ',
+};
+
+void connect({String password = 'example-password-123'}) {}
+
+void run() {
+  connect(password: 'aaaaaaaaaaaaaaaaaaaaaaaa');
+}
