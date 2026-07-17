@@ -1,5 +1,22 @@
 # Changelog
 
+## [0.6.0](https://github.com/PopovVA/security_doctor/compare/v0.5.1...v0.6.0) (2026-07-17)
+
+
+### Features
+
+* **sd001:** detect secrets in map entries, parameter defaults and named arguments ([#36](https://github.com/PopovVA/security_doctor/issues/36)) ([6658f0a](https://github.com/PopovVA/security_doctor/commit/6658f0abd710dbbba468e643347d5ad6e6e7c409)), closes [#33](https://github.com/PopovVA/security_doctor/issues/33)
+
+
+### Bug Fixes
+
+* **rules:** locate() skips matches inside XML comments ([#35](https://github.com/PopovVA/security_doctor/issues/35)) ([a429cac](https://github.com/PopovVA/security_doctor/commit/a429cac1275a83b8a638bea3bf9ac36206956309)), closes [#32](https://github.com/PopovVA/security_doctor/issues/32)
+
+
+### Performance Improvements
+
+* **engine:** skip ignored directories before descending into them ([#34](https://github.com/PopovVA/security_doctor/issues/34)) ([2911ae9](https://github.com/PopovVA/security_doctor/commit/2911ae9f814aca96a9d527514bf8bffb5f0211b0)), closes [#31](https://github.com/PopovVA/security_doctor/issues/31)
+
 ## [0.5.1](https://github.com/PopovVA/security_doctor/compare/v0.5.0...v0.5.1) (2026-07-11)
 
 
