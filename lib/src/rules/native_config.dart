@@ -52,8 +52,23 @@ XmlElement? _nextElementSibling(XmlElement element) {
 
 /// Locates [needle] in the file for a line/column to report. The XML
 /// parse established the semantics; this only recovers a position.
+/// Matches inside `<!-- ... -->` are skipped, so a commented-out copy
+/// of a setting earlier in the file cannot steal the reported line
+/// from the active one.
 ({int line, int column})? locate(ScanFile file, String needle) {
-  final offset = file.content.indexOf(needle);
-  if (offset == -1) return null;
-  return file.positionOf(offset);
+  var offset = file.content.indexOf(needle);
+  while (offset != -1) {
+    if (!_insideComment(file.content, offset)) return file.positionOf(offset);
+    offset = file.content.indexOf(needle, offset + needle.length);
+  }
+  return null;
+}
+
+/// Whether [offset] falls inside an XML comment — the nearest `<!--`
+/// before it is still unclosed. Valid XML forbids `--` within a
+/// comment, so comparing the last two markers is enough.
+bool _insideComment(String content, int offset) {
+  final open = content.lastIndexOf('<!--', offset);
+  if (open == -1) return false;
+  return content.lastIndexOf('-->', offset) < open;
 }
