@@ -59,6 +59,24 @@ void main() {
     expect(findings.single.message, contains('App Transport Security'));
   });
 
+  test('reports the active key, not a commented-out copy above it', () {
+    final file = ScanFile(
+      path: 'ios/Runner/Info.plist',
+      content: '''
+<plist version="1.0"><dict>
+  <!-- <key>NSAllowsArbitraryLoads</key><true/> -->
+  <key>NSAllowsArbitraryLoads</key><true/>
+</dict></plist>
+''',
+      kind: FileKind.infoPlist,
+    );
+
+    final findings = rule.check(file);
+
+    expect(findings, hasLength(1));
+    expect(findings.single.line, 3);
+  });
+
   test('stays quiet when NSAllowsArbitraryLoads is false', () {
     expect(
       checkTextFixture(

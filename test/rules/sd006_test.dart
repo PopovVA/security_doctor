@@ -28,6 +28,24 @@ void main() {
     expect(messages, contains('android:allowBackup'));
   });
 
+  test('reports the active flag, not a commented-out copy above it', () {
+    final file = ScanFile(
+      path: _manifestPath,
+      content: '''
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+  <!-- android:debuggable="true" was only ever meant for local builds -->
+  <application android:debuggable="true"/>
+</manifest>
+''',
+      kind: FileKind.androidManifest,
+    );
+
+    final findings = rule.check(file);
+
+    expect(findings, hasLength(1));
+    expect(findings.single.line, 3);
+  });
+
   test('stays quiet on ="false"/absent flags and debug manifests', () {
     expect(
       checkTextFixture(
