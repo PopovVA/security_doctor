@@ -82,6 +82,25 @@ void main() {
     expect(report.scannedFileCount, 0);
   });
 
+  test(
+    'skipped directories are not descended into at all',
+    () {
+      write('.git/objects/pack/a.dart', 'MARKER\n');
+      write('lib/a.dart', 'MARKER\n');
+      // An unreadable subdirectory proves the walk never enters `.git`:
+      // a flat recursive listing would throw on it before any filtering.
+      final locked = Directory('${root.path}/.git/objects');
+      Process.runSync('chmod', ['000', locked.path]);
+      addTearDown(() => Process.runSync('chmod', ['755', locked.path]));
+
+      final report = SecurityAuditor(rules: [const MarkerRule()]).audit(root);
+
+      expect(report.findings.map((f) => f.path), ['lib/a.dart']);
+      expect(report.scannedFileCount, 1);
+    },
+    skip: Platform.isWindows ? 'chmod is POSIX-only' : null,
+  );
+
   test('dart rules run on parsed units', () {
     write('lib/api.dart', "const url = 'http://api.example.com';\n");
 

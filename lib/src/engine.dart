@@ -168,26 +168,39 @@ class SecurityAuditor {
   }
 
   Iterable<ScanFile> _discover(Directory root) sync* {
-    final rootPath = root.path;
-    final entries = root
-        .listSync(recursive: true, followLinks: false)
-        .whereType<File>()
-        .toList()
+    yield* _discoverDirectory(root, root.path);
+  }
+
+  /// Walks one directory level at a time so ignored directories are
+  /// skipped before descending — a flat `listSync(recursive: true)`
+  /// would walk all of `.git`, `build` or `node_modules` only to have
+  /// every entry filtered out afterwards. Per-level sorting keeps
+  /// discovery deterministic; findings are re-sorted globally in
+  /// [audit] regardless.
+  Iterable<ScanFile> _discoverDirectory(
+    Directory dir,
+    String rootPath,
+  ) sync* {
+    final entries = dir.listSync(followLinks: false)
       ..sort((a, b) => a.path.compareTo(b.path));
 
-    for (final file in entries) {
-      final relative = _relativePath(file.path, rootPath);
-      if (relative.split('/').any(_skippedDirs.contains)) continue;
-      final kind = ScanFile.classify(relative);
-      if (kind == null) continue;
-      if (config.excludes(relative)) continue;
-      final String content;
-      try {
-        content = file.readAsStringSync();
-      } on FileSystemException {
-        continue; // Unreadable or non-UTF8 file: nothing a text rule can do.
+    for (final entry in entries) {
+      final relative = _relativePath(entry.path, rootPath);
+      if (entry is Directory) {
+        if (_skippedDirs.contains(relative.split('/').last)) continue;
+        yield* _discoverDirectory(entry, rootPath);
+      } else if (entry is File) {
+        final kind = ScanFile.classify(relative);
+        if (kind == null) continue;
+        if (config.excludes(relative)) continue;
+        final String content;
+        try {
+          content = entry.readAsStringSync();
+        } on FileSystemException {
+          continue; // Unreadable or non-UTF8 file: nothing a text rule can do.
+        }
+        yield ScanFile(path: relative, content: content, kind: kind);
       }
-      yield ScanFile(path: relative, content: content, kind: kind);
     }
   }
 
