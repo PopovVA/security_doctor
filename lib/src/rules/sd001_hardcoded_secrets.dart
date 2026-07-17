@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 
 import 'package:analyzer/dart/ast/ast.dart';
+import 'package:analyzer/dart/ast/token.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
 
 import '../rule.dart';
@@ -189,10 +190,19 @@ class _SecretDeclaration {
 /// literal: variable initializers, map entries, parameter defaults and
 /// named arguments. Entropy and placeholder filtering happen later in
 /// [HardcodedSecretsRule.check]; this only gathers candidates.
+///
+/// Parameter defaults and named arguments are recognized by the shape
+/// of the literal's parent node, not by AST class: analyzer 14 renamed
+/// both nodes (`NamedExpression` → `NamedArgument`,
+/// `DefaultFormalParameter` → a default clause nested in the
+/// parameter), and shape matching keeps a single code path compiling
+/// across analyzer 8 through 14 — the same approach as SD004's
+/// `Object?` signature.
 class _SecretDeclarationVisitor extends RecursiveAstVisitor<void> {
   final suspects = <_SecretDeclaration>[];
 
-  void _suspect(String kind, String name, Expression? value) {
+  void _suspect(String kind, String? name, Expression? value) {
+    if (name == null) return;
     if (value is! SimpleStringLiteral) return;
     if (!HardcodedSecretsRule._secretName.hasMatch(name)) return;
     suspects.add(
@@ -221,20 +231,65 @@ class _SecretDeclarationVisitor extends RecursiveAstVisitor<void> {
         : key is SimpleIdentifier
             ? key.name
             : null;
-    if (name != null) _suspect('Map entry', name, node.value);
+    _suspect('Map entry', name, node.value);
     super.visitMapLiteralEntry(node);
   }
 
   @override
-  void visitDefaultFormalParameter(DefaultFormalParameter node) {
-    final name = node.parameter.name;
-    if (name != null) _suspect('Parameter', name.lexeme, node.defaultValue);
-    super.visitDefaultFormalParameter(node);
+  void visitSimpleStringLiteral(SimpleStringLiteral node) {
+    final parent = node.parent;
+    if (parent != null) {
+      final shape = parent.childEntities.toList();
+      _suspect('Argument', _argumentName(shape, node), node);
+      _suspect('Parameter', _parameterName(parent, shape, node), node);
+    }
+    super.visitSimpleStringLiteral(node);
   }
 
-  @override
-  void visitNamedExpression(NamedExpression node) {
-    _suspect('Argument', node.name.label.name, node.expression);
-    super.visitNamedExpression(node);
+  /// The name binding [node] as a named argument, or null.
+  ///
+  /// analyzer ≤13 parses `f(key: 'v')` as `NamedExpression(Label('key:')
+  /// value)` where the label wraps an identifier; analyzer 14 parses it
+  /// as `NamedArgument('key' ':' value)` with plain tokens.
+  static String? _argumentName(List<Object?> shape, SimpleStringLiteral node) {
+    if (shape case [Label label, SimpleStringLiteral value]
+        when identical(value, node)) {
+      final name = label.childEntities.first;
+      if (name is SimpleIdentifier) return name.name;
+    }
+    if (shape case [Token name, Token colon, SimpleStringLiteral value]
+        when colon.lexeme == ':' && identical(value, node)) {
+      return name.lexeme;
+    }
+    return null;
+  }
+
+  /// The name of the parameter that [node] is the default value of, or
+  /// null.
+  ///
+  /// analyzer ≤13 wraps the parameter: `DefaultFormalParameter(parameter
+  /// '=' value)`; analyzer 14 nests the clause inside the parameter
+  /// instead: `FormalParameter(... DefaultClause('=' value))`.
+  static String? _parameterName(
+    AstNode parent,
+    List<Object?> shape,
+    SimpleStringLiteral node,
+  ) {
+    bool isSeparator(Token token) => token.lexeme == '=' || token.lexeme == ':';
+
+    if (shape
+        case [
+          FormalParameter parameter,
+          Token separator,
+          SimpleStringLiteral value,
+        ] when isSeparator(separator) && identical(value, node)) {
+      return parameter.name?.lexeme;
+    }
+    if (shape case [Token separator, SimpleStringLiteral value]
+        when isSeparator(separator) && identical(value, node)) {
+      final grandparent = parent.parent;
+      if (grandparent is FormalParameter) return grandparent.name?.lexeme;
+    }
+    return null;
   }
 }
