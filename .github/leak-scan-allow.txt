@@ -1,0 +1,6 @@
+# Paths whose secrets are fake on purpose: they are what SD001 is tested
+# against. Everything here is a well known documentation placeholder, never
+# a working credential.
+test/fixtures
+test/rules/sd001_test.dart
+example/vulnerable_app

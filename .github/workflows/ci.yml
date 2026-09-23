@@ -34,3 +34,10 @@ jobs:
       # Lower-bound check, mirroring pub.dev's downgrade analysis.
       - run: dart pub downgrade
       - run: dart analyze --fatal-infos
+
+  leaks:
+    name: No leaked identifiers
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - run: .github/leak-scan.sh
