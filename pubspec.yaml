@@ -5,6 +5,13 @@ description: >-
 version: 0.6.0
 repository: https://github.com/PopovVA/security_doctor
 
+topics:
+  - security
+  - static-analysis
+  - cli
+  - ci
+  - code-quality
+
 environment:
   sdk: ^3.5.0
 
