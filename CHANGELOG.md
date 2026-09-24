@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.7.0](https://github.com/PopovVA/security_doctor/compare/v0.6.0...v0.7.0) (2026-09-24)
+
+
+### Features
+
+* ship a GitHub Action that feeds Code Scanning ([#42](https://github.com/PopovVA/security_doctor/issues/42)) ([52e71f5](https://github.com/PopovVA/security_doctor/commit/52e71f5fda7ad3f9da6d22e9b82e2859494783d4))
+
+
+### Bug Fixes
+
+* declare pub.dev topics so the package is discoverable ([#40](https://github.com/PopovVA/security_doctor/issues/40)) ([7fe9578](https://github.com/PopovVA/security_doctor/commit/7fe95787de1c4d814f845517c8cc3ec39fea9a28))
+
 ## [0.6.0](https://github.com/PopovVA/security_doctor/compare/v0.5.1...v0.6.0) (2026-07-17)
 
 
