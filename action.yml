@@ -1,0 +1,127 @@
+name: security_doctor
+# Marketplace requires the description to be under 125 characters.
+description: >-
+  Security audit for Flutter and Dart: OWASP MASVS and CWE mapped findings,
+  straight into GitHub Code Scanning.
+author: PopovVA
+branding:
+  icon: shield
+  color: red
+
+inputs:
+  path:
+    description: Path to the project root containing pubspec.yaml.
+    required: false
+    default: '.'
+  fail-on:
+    description: >-
+      Lowest severity that fails the build: info, low, medium, high or
+      critical. Empty uses fail_on from security_audit.yaml.
+    required: false
+    default: ''
+  format:
+    description: >-
+      Report format when not uploading SARIF: console, json or markdown.
+      Ignored while upload-sarif is true, which needs sarif.
+    required: false
+    default: 'console'
+  upload-sarif:
+    description: >-
+      Send findings to GitHub Code Scanning, so they appear in the Security
+      tab with the rest of your alerts. Needs `security-events: write`.
+    required: false
+    default: 'false'
+  sarif-file:
+    description: Where to write the SARIF report while uploading.
+    required: false
+    default: 'security_doctor.sarif'
+  args:
+    description: 'Extra CLI arguments, e.g. "--compliance iso-27001".'
+    required: false
+    default: ''
+  version:
+    description: >-
+      Version constraint for the CLI, e.g. "^0.6.0". Empty installs the
+      latest release.
+    required: false
+    default: ''
+
+outputs:
+  exit-code:
+    description: '0 clean, 1 findings at or above the threshold, 2 usage error.'
+    value: ${{ steps.scan.outputs.exit-code }}
+  sarif-file:
+    description: Path to the SARIF report, when one was produced.
+    value: ${{ steps.scan.outputs.sarif-file }}
+
+runs:
+  using: composite
+  steps:
+    - uses: dart-lang/setup-dart@v1
+      with:
+        sdk: stable
+
+    - name: Install security_doctor
+      shell: bash
+      env:
+        SD_VERSION: ${{ inputs.version }}
+      run: dart pub global activate security_doctor $SD_VERSION
+
+    # Inputs reach the shell as environment variables rather than through
+    # template interpolation, so a crafted value cannot become a command.
+    - name: Run security_doctor
+      id: scan
+      shell: bash
+      env:
+        SD_PATH: ${{ inputs.path }}
+        SD_FAIL_ON: ${{ inputs.fail-on }}
+        SD_FORMAT: ${{ inputs.format }}
+        SD_UPLOAD: ${{ inputs.upload-sarif }}
+        SD_SARIF: ${{ inputs.sarif-file }}
+        SD_ARGS: ${{ inputs.args }}
+      run: |
+        args=(--path "$SD_PATH")
+        [ -n "$SD_FAIL_ON" ] && args+=(--fail-on "$SD_FAIL_ON")
+        if [ "$SD_UPLOAD" = "true" ]; then
+          args+=(--format sarif)
+        else
+          args+=(--format "$SD_FORMAT")
+        fi
+        # Deliberate word splitting: args is a list of CLI flags.
+        # shellcheck disable=SC2206
+        [ -n "$SD_ARGS" ] && args+=($SD_ARGS)
+
+        # The exit code is carried to the last step instead of failing here,
+        # so findings still reach Code Scanning before the build goes red.
+        set +e
+        if [ "$SD_UPLOAD" = "true" ]; then
+          dart pub global run security_doctor "${args[@]}" > "$SD_SARIF"
+          code=$?
+          echo "sarif-file=$SD_SARIF" >> "$GITHUB_OUTPUT"
+        else
+          dart pub global run security_doctor "${args[@]}"
+          code=$?
+          echo "sarif-file=" >> "$GITHUB_OUTPUT"
+        fi
+        set -e
+
+        echo "exit-code=$code" >> "$GITHUB_OUTPUT"
+        case "$code" in
+          0) echo "No findings at or above the threshold." ;;
+          1) echo "Findings at or above the threshold." ;;
+          *) echo "security_doctor could not run; see the output above." ;;
+        esac
+
+    # Exit code 2 means the run never produced a report worth uploading.
+    - name: Upload to Code Scanning
+      if: ${{ inputs.upload-sarif == 'true' && steps.scan.outputs.exit-code != '2' }}
+      uses: github/codeql-action/upload-sarif@v3
+      with:
+        sarif_file: ${{ inputs.sarif-file }}
+        category: security_doctor
+
+    - name: Report the result
+      shell: bash
+      env:
+        SD_CODE: ${{ steps.scan.outputs.exit-code }}
+      run: exit "$SD_CODE"

@@ -99,7 +99,50 @@ informative evidence for audit preparation — not a compliance verdict.
 | SD009 | 6.2.4 | A.8.28 |
 | SD010 | 6.5.6 | A.8.9 |
 
+### GitHub Action
+
+```yaml
+- uses: actions/checkout@v5
+- uses: PopovVA/security_doctor@v0
+  with:
+    fail-on: high
+```
+
+| Input | Default | What it does |
+| --- | --- | --- |
+| `path` | `.` | Project root containing `pubspec.yaml`. |
+| `fail-on` | from config | Lowest severity that fails the build. |
+| `format` | `console` | `console`, `json` or `markdown`. |
+| `upload-sarif` | `false` | Send findings to GitHub Code Scanning. |
+| `sarif-file` | `security_doctor.sarif` | Where the SARIF report is written. |
+| `args` | none | Extra CLI arguments, e.g. `--compliance iso-27001`. |
+| `version` | latest | Version constraint for the CLI, e.g. `^0.6.0`. |
+
+It also sets `exit-code` as an output: `0` clean, `1` findings, `2` the run
+could not start.
+
 ### GitHub Code Scanning
+
+Findings land in the Security tab next to the rest of your alerts, each one
+carrying its MASVS requirement and CWE id:
+
+```yaml
+permissions:
+  contents: read
+  security-events: write
+
+steps:
+  - uses: actions/checkout@v5
+  - uses: PopovVA/security_doctor@v0
+    with:
+      upload-sarif: true
+```
+
+The report is uploaded before the step fails, so an alert still appears on a
+red build. To collect findings without failing the build, add
+`continue-on-error: true` to the step.
+
+Or drive the CLI yourself on any CI system:
 
 ```yaml
 - run: security_doctor --format sarif > security.sarif || true
