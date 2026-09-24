@@ -2,6 +2,7 @@
 
 [![pub package](https://img.shields.io/pub/v/security_doctor.svg)](https://pub.dev/packages/security_doctor)
 [![CI](https://github.com/PopovVA/security_doctor/actions/workflows/ci.yml/badge.svg)](https://github.com/PopovVA/security_doctor/actions/workflows/ci.yml)
+[![Buy me a coffee](https://img.shields.io/badge/Buy%20me%20a%20coffee-support-FFDD00?logo=buymeacoffee&logoColor=black)](https://buymeacoffee.com/LeonRedfield)
 
 Security audit for Flutter and Dart apps. Every rule maps to an
 [OWASP MASVS](https://mas.owasp.org/MASVS/) requirement and a
@@ -139,6 +140,11 @@ security_doctor --path example/vulnerable_app
 | `0` | No findings at or above the severity threshold. |
 | `1` | Findings at or above the threshold. |
 | `2` | Usage or runtime error (e.g. no `pubspec.yaml`). |
+
+## Support
+
+This package is free and maintained in my own time. If it saved you some,
+[buy me a coffee](https://buymeacoffee.com/LeonRedfield).
 
 ## License
 
