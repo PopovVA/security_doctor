@@ -115,7 +115,7 @@ runs:
     # Exit code 2 means the run never produced a report worth uploading.
     - name: Upload to Code Scanning
       if: ${{ inputs.upload-sarif == 'true' && steps.scan.outputs.exit-code != '2' }}
-      uses: github/codeql-action/upload-sarif@v3
+      uses: github/codeql-action/upload-sarif@v4
       with:
         sarif_file: ${{ inputs.sarif-file }}
         category: security_doctor
